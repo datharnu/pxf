@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect } from "react";
-import { motion, useAnimation } from "framer-motion";
+import { useAnimation } from "framer-motion";
 import Image from "next/image";
 import Navbar from "@/components/shared/Navbar";
 import { ArrowRight } from "lucide-react";
@@ -75,60 +75,44 @@ export default function SectionWithCarousel() {
             <div className="flex gap-4 lg:h-[500px] h-[300px] relative overflow-hidden">
               {/* First column - Going up */}
               <div className="w-40 lg:w-72 h-full relative overflow-hidden rounded-xl">
-                <motion.div
-                  className="absolute top-0 left-0 w-full"
-                  animate={controls1}
-                  initial={{ y: 0 }}
-                  whileHover={{ y: controls1.stop }}
-                >
-                  {/* Double the array to ensure smooth looping */}
+                <div className="absolute top-0 left-0 w-full scroll-up pause-on-hover">
                   {[...imageArray1, ...imageArray1].map((image, index) => (
                     <div
                       key={`up-${index}`}
                       className="w-full h-40 sm:h-48 md:h-64 mb-4 relative overflow-hidden rounded-xl shadow-lg"
                     >
-                      <div className="w-full h-full relative">
-                        {/* Replace with your actual image component */}
-                        <Image
-                          src={image} // Replace with actual image path when available
-                          alt={`Event photo ${index + 1}`}
-                          fill
-                          sizes="(max-width: 768px) 100vw, 33vw"
-                          className="object-cover"
-                        />
-                      </div>
+                      <Image
+                        src={image}
+                        alt={`Event photo ${index + 1}`}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover"
+                      />
                     </div>
                   ))}
-                </motion.div>
+                </div>
               </div>
 
               {/* Second column - Going down */}
               <div className="w-48 lg:w-72 h-full relative overflow-hidden rounded-xl">
-                <motion.div
-                  className="absolute bottom-0 left-0 w-full"
-                  animate={controls2}
-                  initial={{ y: 0 }}
-                  whileHover={{ y: controls2.stop }}
-                >
-                  {/* Double the array to ensure smooth looping */}
-                  {[...imageArray2, ...imageArray2].map((image, index) => (
-                    <div
-                      key={`down-${index}`}
-                      className="w-full h-64 mb-4 relative overflow-hidden rounded-xl shadow-lg"
-                    >
-                      <div className="w-full h-full relative">
-                        {/* Replace with your actual image component */}
+                <div className="w-48 lg:w-72 h-full relative overflow-hidden rounded-xl">
+                  <div className="absolute bottom-0 left-0 w-full scroll-down pause-on-hover">
+                    {[...imageArray2, ...imageArray2].map((image, index) => (
+                      <div
+                        key={`down-${index}`}
+                        className="w-full h-64 mb-4 relative overflow-hidden rounded-xl shadow-lg"
+                      >
                         <Image
-                          src={image} // Replace with actual image path when available
+                          src={image}
                           alt={`Event photo ${index + 1}`}
                           fill
                           sizes="(max-width: 768px) 100vw, 33vw"
                           className="object-cover"
                         />
                       </div>
-                    </div>
-                  ))}
-                </motion.div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
