@@ -6,16 +6,15 @@ import { FaCamera } from "react-icons/fa";
 
 export default function Features() {
   return (
-    <div className="bg-primary p">
+    <div className="bg-primary ">
       <div className="lg:flex justify-center">
         <Partners />
       </div>
-
       <div className="flex justify-center">
-        <div className="w-full mx-4 md:mx-8 lg:mx-32 my-8 md:my-12 lg:my-20 max-w-[90rem]">
+        <div className="w-full mx-4 md:mx-8 lg:mx-32 my-8 md:my-12  max-w-[90rem]">
           {/* For mobile & tablet: stack everything in a single column */}
           {/* For desktop: maintain original grid layout */}
-          <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-5 gap-4 md:gap-5 lg:grid-rows-5">
+          <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-5 gap-4 md:gap-5">
             {/* Feature Image - Full width on mobile/tablet */}
             <div className="col-span-1 md:col-span-1 lg:col-span-2 lg:row-span-3 relative h-[300px] md:h-[400px] lg:min-h-[700px]">
               <Image
@@ -37,7 +36,7 @@ export default function Features() {
                   <DevicePhoneMobileIcon className="w-5 h-5" />
                   No App download required
                 </p>
-                <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-7xl font-bold uppercase my-4 md:my-6 lg:my-10 font-ghotic tracking-widest">
+                <h1 className="text-3xl md:text-4xl  xl:text-7xl font-bold uppercase my-4 md:my-6 lg:my-10 font-ghotic tracking-widest">
                   Personalize for Your Event
                 </h1>
                 <p
