@@ -52,7 +52,7 @@ export default function SectionWithCarousel() {
       <div className="flex justify-center   ">
         <div className="flex flex-col md:flex-row justify-between  items-center mx-4 md:mx-12 lg:mx-32 my-20 max-w-[90rem] w-full px-2">
           <div className="text-white w-full   md:w-1/2 pr-0 md:pr-12 mb-10 md:mb-0">
-            <h1 className="lg:text-4xl text-3xl font-bold uppercase mb-6 font-ghotic ">
+            <h1 className="lg:text-4xl text-3xl font-bold highway-ghotic uppercase mb-6 font-ghotic ">
               A camera to capture every perspective
             </h1>
             <p className="lg:text-sm xl:text-lg leading-relaxed ">

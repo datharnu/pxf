@@ -10,15 +10,15 @@ export const navLinks: NavLink[] = [
   },
   {
     title: "Create Event",
-    href: "/create",
+    href: "/create-event",
   },
   {
     title: "Join Event",
-    href: "/join",
+    href: "/join-event",
   },
   {
     title: "My Events",
-    href: "/dashboard",
+    href: "/my-events",
   },
   {
     title: "Blog",

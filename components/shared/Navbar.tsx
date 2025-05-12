@@ -47,7 +47,7 @@ export default function Navbar() {
                   <li key={link.title}>
                     <Link
                       href={link.href}
-                      className="text-gray-700 text-sm hover:text-blue-600 uppercase font-semibold  transition duration-200"
+                      className="text-gray-700 text-sm highway-ghotic tracking-widest hover:text-blue-600 uppercase font-semibold  transition duration-200"
                     >
                       {link.title}
                     </Link>
@@ -58,7 +58,7 @@ export default function Navbar() {
           </div>
 
           {/* Authentication Buttons - Hidden on Mobile */}
-          <div className="hidden lg:flex items-center gap-2">
+          <div className="hidden lg:flex items-center highway-ghotic gap-2">
             <Link href="/sign-in">
               <Button className="h-8 font-bold text-sm">LOG IN</Button>
             </Link>

@@ -11,13 +11,13 @@ const faqItems: FAQItem[] = [
   {
     question: "How is it possible guests don't have to download the app?",
     answer:
-      "POV uses a technology called App Clips on iOS and Instant Apps on Android that allows guests to instantly access key features without downloading the full app. This creates a seamless experience for your event attendees.",
+      "PXF uses a technology called App Clips on iOS and Instant Apps on Android. App Clips and Instant Apps let others join your POV camera directly from a link or QR Code, without having to download an app from the App Store.",
     icon: "/pov1.svg",
   },
   {
     question: "Does POV work without internet?",
     answer:
-      "POV requires an internet connection (either WiFi or cellular data) to function properly. This ensures all photos can be shared instantly with event participants and enables real-time updates.",
+      "POV requires the internet (either WiFi or cellular data) to both access the experience and send in photos . For the vast majority of locations, this isn't an issue, but if you are using POV in an area that has spotty internet, we recommend testing it out at the venue beforehand.",
     icon: "/pov2.svg",
   },
   {
@@ -33,10 +33,16 @@ const faqItems: FAQItem[] = [
     icon: "/pov4.svg",
   },
   {
+    question: "Can i review photos before the gallery goes live?",
+    answer:
+      "Yes, you can review photos before the gallery goes live. You can do this by navigating to your event dashboard and selecting 'Review Photos'.",
+    icon: "/pov5.svg",
+  },
+  {
     question: "Additional Questions?",
     answer:
       "Feel free to contact our support team via the app or email us at support@povapp.com. We typically respond within 24 hours and are happy to help with any questions or concerns you might have.",
-    icon: "/pov5.svg",
+    icon: "/pov6.svg",
   },
 ];
 
