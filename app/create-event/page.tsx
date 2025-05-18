@@ -1,90 +1,194 @@
-// "use client";
-
-// import { useForm } from "react-hook-form";
-
-// export default function CreateEventForm() {
-//   const {
-//     register,
-//     handleSubmit,
-//     formState: { errors },
-//   } = useForm();
-
-//   const onSubmit = (data: unknown) => {
-//     console.log("Event Data:", data);
-//     alert("This is just UI – event would be created here.");
-//   };
-
-//   return (
-//     <div className="max-w-xl mx-auto p-6">
-//       <h2 className="text-3xl font-bold mb-6">Create Your Event</h2>
-
-//       {/* <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-//         <div>
-//           <label className="block mb-1 font-medium">Event Name</label>
-//           <input
-//             {...register("title", { required: true })}
-//             placeholder="e.g. John & Ada Wedding"
-//             className="w-full px-4 py-2 border rounded-md"
-//           />
-//           {errors.title && (
-//             <p className="text-sm text-red-500 mt-1">Event name is required</p>
-//           )}
-//         </div>
-
-//         <div>
-//           <label className="block mb-1 font-medium">
-//             Description (optional)
-//           </label>
-//           <textarea
-//             {...register("description")}
-//             rows={3}
-//             placeholder="Say something about the event..."
-//             className="w-full px-4 py-2 border rounded-md"
-//           />
-//         </div>
-
-//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//           <div>
-//             <label className="block mb-1 font-medium">Max Guests</label>
-//             <input
-//               type="number"
-//               defaultValue={10}
-//               {...register("maxGuests")}
-//               className="w-full px-4 py-2 border rounded-md"
-//             />
-//           </div>
-
-//           <div>
-//             <label className="block mb-1 font-medium">Uploads per Guest</label>
-//             <input
-//               type="number"
-//               defaultValue={10}
-//               {...register("maxUploadsPerGuest")}
-//               className="w-full px-4 py-2 border rounded-md"
-//             />
-//           </div>
-//         </div>
-
-//         <button
-//           type="submit"
-//           className="w-full bg-black text-white py-2 rounded-md hover:opacity-90 transition"
-//         >
-//           Continue
-//         </button>
-//       </form> */}
-//     </div>
-//   );
-// }
-
-import React from "react";
-import EventSlider from "./components/EventSlider";
+"use client";
+import { useEffect, useRef, useState } from "react";
+import { useInView } from "react-intersection-observer";
 import Navbar from "@/components/shared/Navbar";
+import StepOne from "./components/StepOne";
+import StepTwo from "./components/StepTwo";
+import StepThree from "./components/StepThree";
+import StepFour from "./components/StepFour";
+import StepFive from "./components/StepFive";
 
-export default function CreateEvent() {
+const MultiStepForm = () => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 5;
+  const formContainerRef = useRef(null);
+
+  const [formData, setFormData] = useState({
+    whatsTheOccasion: "",
+    description: "",
+    cover: null,
+    howManyGuests: "",
+    photosPerPerson: "",
+  });
+
+  const [validation, setValidation] = useState({
+    whatsTheOccasion: false,
+    description: true, // Optional
+    cover: false,
+    howManyGuests: false,
+    photosPerPerson: false,
+  });
+
+  // Step refs for detecting which step is in view
+  const [stepOneRef, stepOneInView] = useInView({ threshold: 0.6 });
+  const [stepTwoRef, stepTwoInView] = useInView({ threshold: 0.6 });
+  const [stepThreeRef, stepThreeInView] = useInView({ threshold: 0.6 });
+  const [stepFourRef, stepFourInView] = useInView({ threshold: 0.6 });
+  const [stepFiveRef, stepFiveInView] = useInView({ threshold: 0.6 });
+
+  // Track current step in view
+  useEffect(() => {
+    if (stepOneInView) setCurrentStep(1);
+    else if (stepTwoInView) setCurrentStep(2);
+    else if (stepThreeInView) setCurrentStep(3);
+    else if (stepFourInView) setCurrentStep(4);
+    else if (stepFiveInView) setCurrentStep(5);
+  }, [
+    stepOneInView,
+    stepTwoInView,
+    stepThreeInView,
+    stepFourInView,
+    stepFiveInView,
+  ]);
+
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+
+    if (name === "cover" && files?.[0]) {
+      setFormData((prev) => ({ ...prev, cover: files[0] }));
+      setValidation((prev) => ({ ...prev, cover: true }));
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    switch (name) {
+      case "whatsTheOccasion":
+        setValidation((prev) => ({
+          ...prev,
+          [name]: value.trim().length > 0,
+        }));
+        break;
+      case "description":
+        setValidation((prev) => ({ ...prev, [name]: true }));
+        break;
+      case "howManyGuests":
+        setValidation((prev) => ({
+          ...prev,
+          [name]: !isNaN(value) && Number(value) > 0,
+        }));
+        break;
+      case "photosPerPerson":
+        setValidation((prev) => ({
+          ...prev,
+          [name]: !isNaN(value) && Number(value) > 0,
+        }));
+        break;
+      default:
+        break;
+    }
+  };
+
+  const goToNextStep = (e) => {
+    e.preventDefault();
+    const nextStep = currentStep + 1;
+    if (nextStep <= totalSteps) {
+      const nextSection = document.getElementById(`step${nextStep}`);
+      nextSection?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Form submitted:", formData);
+    alert("Form submitted successfully!");
+  };
+
   return (
-    <div>
+    <div className="relative">
       <Navbar />
-      <EventSlider />
+
+      {/* Progress Bar */}
+      <div className="fixed top-0 left-0 w-full h-1 bg-gray-800 z-20">
+        <div
+          className="h-full bg-white transition-all duration-300 ease-in-out"
+          style={{
+            width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%`,
+          }}
+        />
+      </div>
+
+      {/* Form Steps */}
+      <div
+        className="bg-primary min-h-screen text-white overflow-y-auto snap-y snap-mandatory"
+        ref={formContainerRef}
+      >
+        <div id="step1" ref={stepOneRef} className="snap-start">
+          <StepOne
+            formData={formData}
+            handleChange={handleChange}
+            validation={validation}
+            goToNextStep={goToNextStep}
+          />
+        </div>
+
+        <div id="step2" ref={stepTwoRef} className="snap-start">
+          <StepTwo
+            formData={formData}
+            handleChange={handleChange}
+            validation={validation}
+            goToNextStep={goToNextStep}
+          />
+        </div>
+
+        <div id="step3" ref={stepThreeRef} className="snap-start">
+          <StepThree
+            formData={formData}
+            handleChange={handleChange}
+            validation={validation}
+            goToNextStep={goToNextStep}
+          />
+        </div>
+
+        <div id="step4" ref={stepFourRef} className="snap-start">
+          <StepFour
+            formData={formData}
+            handleChange={handleChange}
+            validation={validation}
+            goToNextStep={goToNextStep}
+          />
+        </div>
+
+        <div id="step5" ref={stepFiveRef} className="snap-start">
+          <StepFive
+            formData={formData}
+            handleChange={handleChange}
+            validation={validation}
+            handleSubmit={handleSubmit}
+          />
+        </div>
+      </div>
+
+      {/* Magnifier Button */}
+      <button
+        className="fixed bottom-6 right-6 w-10 h-10 bg-yellow-800 rounded-full flex items-center justify-center z-20"
+        aria-label="Search"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M15.5 14H14.71L14.43 13.73C15.41 12.59 16 11.11 16 9.5C16 5.91 13.09 3 9.5 3C5.91 3 3 5.91 3 9.5C3 13.09 5.91 16 9.5 16C11.11 16 12.59 15.41 13.73 14.43L14 14.71V15.5L19 20.49L20.49 19L15.5 14ZM9.5 14C7.01 14 5 11.99 5 9.5C5 7.01 7.01 5 9.5 5C11.99 5 14 7.01 14 9.5C14 11.99 11.99 14 9.5 14Z"
+            fill="white"
+          />
+        </svg>
+      </button>
     </div>
   );
-}
+};
+
+export default MultiStepForm;
