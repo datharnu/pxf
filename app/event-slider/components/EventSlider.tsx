@@ -101,7 +101,7 @@ export default function EventSlider() {
   useEffect(() => {
     const interval = setInterval(() => {
       handleNext();
-    }, 10000);
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
