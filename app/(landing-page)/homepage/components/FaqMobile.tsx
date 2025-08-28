@@ -33,7 +33,7 @@ const faqItems: FAQItem[] = [
     icon: "/pov4.svg",
   },
   {
-    question: "Can i review photos before the gallery goes live?",
+    question: "Can i review photos ?",
     answer:
       "Yes, you can review photos before the gallery goes live. You can do this by navigating to your event dashboard and selecting 'Review Photos'.",
     icon: "/pov5.svg",

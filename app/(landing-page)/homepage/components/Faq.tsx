@@ -9,7 +9,7 @@ type FAQItem = {
 
 const faqItems: FAQItem[] = [
   {
-    question: "How is it possible guests don't have to download the app?",
+    question: "How is it possible guests ",
     answer:
       "PXF uses a technology called App Clips on iOS and Instant Apps on Android. App Clips and Instant Apps let others join your POV camera directly from a link or QR Code, without having to download an app from the App Store.",
     icon: "/pov1.svg",
@@ -33,7 +33,7 @@ const faqItems: FAQItem[] = [
     icon: "/pov4.svg",
   },
   {
-    question: "Can i review photos before the gallery goes live?",
+    question: "Can i review photos ?",
     answer:
       "Yes, you can review photos before the gallery goes live. You can do this by navigating to your event dashboard and selecting 'Review Photos'.",
     icon: "/pov5.svg",

@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import Image from "next/image";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { QRCodeScanner } from "./components/qrcode";
 
 // Extract the component that uses useSearchParams into a separate component
 function MyEventsContent() {
@@ -25,6 +26,7 @@ function MyEventsContent() {
   const queryClient = useQueryClient();
   const [events, setEvents] = useState<CreateEventResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showQRScanner, setShowQRScanner] = useState<boolean>(false);
   const [error, setError] = useState("");
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
@@ -135,22 +137,16 @@ function MyEventsContent() {
     }
   };
 
-  // const openEventUrl = (eventSlug: string) => {
-  //   const url = `${window.location.origin}/event/${eventSlug}`;
-  //   window.open(url, "_blank");
-  // };
+  const handleQRScan = (data: string): void => {
+    console.log("Scanned QR:", data);
+    setShowQRScanner(false);
 
-  // const formatEventDate = (dateString: string | null) => {
-  //   if (!dateString) return "No date set";
-  //   return new Date(dateString).toLocaleDateString("en-US", {
-  //     weekday: "short",
-  //     year: "numeric",
-  //     month: "short",
-  //     day: "numeric",
-  //     hour: "2-digit",
-  //     minute: "2-digit",
-  //   });
-  // };
+    // Process the QR code data
+    // For example, if it's an event URL, navigate to it
+    if (data.includes("/event/")) {
+      router.push(data.replace(window.location.origin, ""));
+    }
+  };
 
   const shortenDescription = (description: string, maxWords: number = 8) => {
     if (!description) return "";
@@ -234,10 +230,19 @@ function MyEventsContent() {
         <div className="mb-8 space-y-8">
           <div className="flex justify-between items-center">
             <h1 className="text-3xl font-semibold text-white">Cameras</h1>
-            <div className="flex items-center gap-3 bg-[#353935] py-2 px-3 rounded-full">
-              <ScanLine className="w-4 h-4 text-white " />
-              <span className="text-white font-semibold"> Join</span>
-            </div>
+            <button
+              onClick={() => setShowQRScanner(true)}
+              className="flex items-center gap-3 bg-[#353935] py-2 px-3 rounded-full cursor-pointer"
+            >
+              <ScanLine className="w-4 h-4 text-white" />
+              <span className="text-white font-semibold">Join</span>
+            </button>
+
+            <QRCodeScanner
+              isOpen={showQRScanner}
+              onClose={() => setShowQRScanner(false)}
+              onScan={handleQRScan}
+            />
           </div>
           <p className="text-gray-400 font-bold  mt-2">
             {/* Manage and share your created events */}
@@ -256,7 +261,7 @@ function MyEventsContent() {
             </p>
             <Button
               onClick={() => router.push("/create-event")}
-              className="bg-orange-600 hover:bg-orange-700"
+              className="bg-orange-600 hover:bg-orange-700 cursor-pointer"
             >
               Create Event
             </Button>
@@ -309,14 +314,6 @@ function MyEventsContent() {
                   <p className="text-[#919191] font-semibold text-xs mb-4 line-clamp-2">
                     {shortenDescription(event.description || "")}
                   </p>
-
-                  {/* Event Details */}
-                  {/* <div className="space-y-2 mb-4 flex flex-col">
-                    <div className="flex items-center text-sm text-gray-500">
-                      <User className="w-4 h-4 mr-2" />
-                      <span>{event.guestLimit || "N/A"} guests</span>
-                    </div>
-                  </div> */}
 
                   {/* Action Buttons */}
                   <div className="flex items-center gap-5 ">
@@ -403,7 +400,7 @@ function MyEventsContent() {
           <div className="mt-8 text-center">
             <Button
               onClick={() => router.push("/create-event")}
-              className="bg-orange-600 hover:bg-orange-700"
+              className="bg-orange-600 hover:bg-orange-700 cursor-pointer"
             >
               Create New Event
             </Button>
