@@ -63,7 +63,10 @@ export default function SectionWithCarousel() {
               participate.
             </p>
 
-            <button className="font-ghotic mt-10 lg:text-lg text-sm uppercase flex items-center lg:gap-5 gap-2 bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500  py-1 px-1 pl-2 lg:px-2 lg:py-2 lg:pl-4 font-bold rounded-full ">
+            <button
+              onClick={() => (window.location.href = "/create-event")}
+              className="font-ghotic mt-10 lg:text-lg text-sm uppercase flex items-center lg:gap-5 gap-2 bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500  py-1 px-1 pl-2 lg:px-2 lg:py-2 lg:pl-4 font-bold rounded-full "
+            >
               Create a POV Camera
               <div className="bg-white rounded-full lg:px-2 lg:py-2 px-1 py-1">
                 <ArrowRight className=" text-black lg:size-5 size-4 " />

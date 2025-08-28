@@ -86,7 +86,7 @@ const StepTwo: React.FC<StepTwoProps> = ({
       </p>
 
       <form className="w-full max-w-md" onSubmit={goToNextStep}>
-        <div className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 flex items-center mb-2">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 flex items-center mb-5">
           <textarea
             name="description"
             placeholder="Enter a brief description..."

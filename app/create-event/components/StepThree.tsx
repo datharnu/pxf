@@ -439,7 +439,7 @@ const StepThree: React.FC<StepThreeProps> = ({
       />
 
       <form onSubmit={goToNextStep} className="w-full max-w-md">
-        <div className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 mb-2 text-center">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 mb-5 text-center">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}

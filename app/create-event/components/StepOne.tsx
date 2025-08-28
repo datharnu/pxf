@@ -102,7 +102,7 @@ const StepOne: React.FC<StepOneProps> = ({
       <h1 className="text-2xl font-bold mb-8">What&apos;s the occasion?</h1>
 
       <form className="w-full max-w-md" onSubmit={goToNextStep}>
-        <div className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 flex items-center mb-2">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 flex items-center mb-5">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"

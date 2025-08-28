@@ -281,7 +281,7 @@ export default function SignIn() {
             <p>
               Don&apos;t have an account?{" "}
               <Link
-                href="/sign-up"
+                href="/create-account"
                 className="font-medium text-orange-500 hover:text-orange-400"
               >
                 Sign up
