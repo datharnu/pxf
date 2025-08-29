@@ -137,16 +137,16 @@ function MyEventsContent() {
     }
   };
 
-  const handleQRScan = (data: string): void => {
-    console.log("Scanned QR:", data);
-    setShowQRScanner(false);
+  // const handleQRScan = (data: string): void => {
+  //   console.log("Scanned QR:", data);
+  //   setShowQRScanner(false);
 
-    // Process the QR code data
-    // For example, if it's an event URL, navigate to it
-    if (data.includes("/event/")) {
-      router.push(data.replace(window.location.origin, ""));
-    }
-  };
+  //   // Process the QR code data
+  //   // For example, if it's an event URL, navigate to it
+  //   if (data.includes("/event/")) {
+  //     router.push(data.replace(window.location.origin, ""));
+  //   }
+  // };
 
   const shortenDescription = (description: string, maxWords: number = 8) => {
     if (!description) return "";
@@ -224,7 +224,10 @@ function MyEventsContent() {
   return (
     <div className="min-h-screen bg-primary">
       <div className="pt-4 px-3">
-        <Navbar />
+        <Navbar
+          onJoinEvent={() => setShowQRScanner(true)}
+          showJoinButton={true}
+        />
       </div>
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-12">
         <div className="mb-8 space-y-8">
@@ -241,7 +244,7 @@ function MyEventsContent() {
             <QRCodeScanner
               isOpen={showQRScanner}
               onClose={() => setShowQRScanner(false)}
-              onScan={handleQRScan}
+              // onScan={handleQRScan}
             />
           </div>
           <p className="text-gray-400 font-bold  mt-2">

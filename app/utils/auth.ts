@@ -54,3 +54,4 @@ export const getAuthHeader = (): Record<string, string> => {
     Authorization: `Bearer ${token}`,
   };
 };
+

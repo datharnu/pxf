@@ -1,9 +1,11 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAnimation } from "framer-motion";
 import Image from "next/image";
 import Navbar from "@/components/shared/Navbar";
 import { ArrowRight } from "lucide-react";
+import { QRCodeScanner } from "@/app/my-events/components/qrcode";
+import { useRouter } from "next/navigation";
 
 // Replace these with your actual image paths
 // Array for first column (moving up)
@@ -13,8 +15,11 @@ const imageArray1 = ["/pic2.jpg", "/pic3.jpg", "/pic4.jpg", "/pic5.jpg"];
 const imageArray2 = ["/pic1.jpg", "/pic6.jpg", "/pic7.jpg", "/pic8.jpg"];
 
 export default function SectionWithCarousel() {
+  const router = useRouter();
   const controls1 = useAnimation();
   const controls2 = useAnimation();
+
+  const [showQRScanner, setShowQRScanner] = useState<boolean>(false);
 
   useEffect(() => {
     // First carousel - moving up
@@ -46,9 +51,30 @@ export default function SectionWithCarousel() {
     };
   }, [controls1, controls2]);
 
+  const handleQRScan = (data: string): void => {
+    console.log("Scanned QR:", data);
+    setShowQRScanner(false);
+
+    // Process the QR code data
+    // For example, if it's an event URL, navigate to it
+    if (data.includes("/event/")) {
+      router.push(data.replace(window.location.origin, ""));
+    }
+  };
+
   return (
     <div className="bg-primary min-h-screen lg:min-h-fit bg-[url('/Footer.svg')] bg-contain bg-no-repeat lg:p-5 p-3">
-      <Navbar />
+      <Navbar
+        onJoinEvent={() => setShowQRScanner(true)}
+        showJoinButton={true}
+      />
+      {/* QR Code Scanner Component */}
+      <QRCodeScanner
+        isOpen={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onScan={handleQRScan}
+      />
+
       <div className="flex justify-center   ">
         <div className="flex flex-col md:flex-row justify-between  items-center mx-4 md:mx-12 lg:mx-32 my-20 max-w-[90rem] w-full px-2">
           <div className="text-white w-full   md:w-1/2 pr-0 md:pr-12 mb-10 md:mb-0">

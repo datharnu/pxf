@@ -12,10 +12,10 @@ export const navLinks: NavLink[] = [
     title: "Create Event",
     href: "/event-slider",
   },
-  {
-    title: "Join Event",
-    href: "/join-event",
-  },
+  // {
+  //   title: "Join Event",
+  //   href: "/join-event",
+  // },
   {
     title: "My Events",
     href: "/my-events",
