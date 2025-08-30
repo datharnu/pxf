@@ -38,7 +38,8 @@ api.interceptors.response.use(
     const shouldHandleLocally =
       originalRequest.url.includes("/auth/user") ||
       originalRequest.url.includes("/chats/conversations") ||
-      originalRequest.url.includes("/messages");
+      originalRequest.url.includes("/messages") ||
+      originalRequest.url.includes("/events/access");
 
     // Skip token refresh for auth endpoints or if we're already checking token validity
     if (
