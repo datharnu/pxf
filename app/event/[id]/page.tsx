@@ -16,6 +16,8 @@ import {
   ArrowLeft,
   X,
   ArrowRightIcon,
+  Plus,
+  Images,
 } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -445,29 +447,17 @@ export default function EventSlugPage() {
   // Show event details (card content) if access granted and flyer is dismissed
   if (eventData) {
     return (
-      <div className="min-h-screen bg-primary p-4">
+      <div className="min-h-screen bg-primary">
         <div className="max-w-4xl mx-auto">
-          {/* Back Button */}
-          <div className="mb-4">
-            <Button
-              variant="ghost"
-              onClick={() => router.push("/")}
-              className="text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Button>
-          </div>
-
           {/* Event Header */}
-          <Card className="mb-6 bg-white">
-            <CardContent className="p-6">
+          <div className="">
+            <div className="">
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Event Flyer Thumbnail */}
                 {eventData.eventFlyer && (
                   <div className="w-full md:w-1/3">
                     <div
-                      className="relative aspect-[3/4] rounded-lg overflow-hidden cursor-pointer"
+                      className="relative aspect-[7/4]  overflow-hidden cursor-pointer"
                       onClick={() => setShowFlyer(true)}
                     >
                       <Image
@@ -476,69 +466,65 @@ export default function EventSlugPage() {
                         fill
                         className="object-cover hover:opacity-80 transition-opacity"
                       />
-                      <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors flex items-center justify-center">
-                        <span className="text-white opacity-0 hover:opacity-100 bg-black/50 px-3 py-1 rounded text-sm transition-opacity">
-                          View Full Size
-                        </span>
-                      </div>
+                      <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-primary to-transparent"></div>
                     </div>
                   </div>
                 )}
 
                 {/* Event Details */}
-                <div className="flex-1">
-                  <h1 className="text-3xl font-bold mb-4">{eventData.title}</h1>
-                  <p className="text-gray-600 mb-4">{eventData.description}</p>
+                <div className="absolute px-3">
+                  {/* Back Button */}
+                  <div className="mt-5">
+                    <button
+                      onClick={() => router.push("/")}
+                      className="text-white hover:bg-white/10 bg-white/40 rounded-full p-2"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                    </button>
+                  </div>
+                  <div className="mt-20 space-y-[4px]">
+                    <p className="text-[#dadada] font-semibold text-xs">
+                      ENDING: {formatDate(eventData.eventDate)}
+                    </p>
+                    <p className=" font-bold text-sm text-white ">
+                      {eventData.title}
+                    </p>
+                  </div>
 
-                  <div className="space-y-2 text-sm">
-                    <p>
-                      <strong>Date:</strong> {formatDate(eventData.eventDate)}
-                    </p>
-                    <p>
+                  <div className="flex items-center gap-2 text-xs text-[#dadada]  mt-[4px]">
+                    {/* <p>
                       <strong>Host:</strong> {eventData.creator.fullname}
-                    </p>
-                    <p>
+                    </p> */}
+                    {/* <p>
                       <strong>Guest Limit:</strong> {eventData.guestLimit}{" "}
                       people
                     </p>
                     <p>
                       <strong>Photo Cap:</strong> {eventData.photoCapLimit}{" "}
                       photos per person
-                    </p>
+                    </p> */}
+                    <p>0 Photos</p> . <p>2 Participants</p>
+                  </div>
+                  <div className="flex gap-3 items-center">
+                    <button className="flex items-center gap-1 mt-4 bg-[#494949] px-3 py-2 rounded-full ">
+                      <Plus className="w-4 h-4 text-[#aaaaaa]" />
+                      <span className="text-[#dadada] text-xs font-bold">
+                        Upload
+                      </span>
+                    </button>
+                    <button className="flex items-center gap-2 mt-4 bg-[#494949] px-3 py-2 rounded-full ">
+                      <Images className="w-4 h-4 text-[#aaaaaa]" />
+                      <span className="text-[#dadada] text-xs font-bold">
+                        Photobook
+                      </span>
+                    </button>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Camera Access Section */}
-          <Card className="bg-white">
-            <CardHeader className="text-center">
-              <Camera className="h-12 w-12 mx-auto mb-4 text-blue-600" />
-              <CardTitle>Welcome to the Event!</CardTitle>
-              <p className="text-gray-600">
-                Start capturing memories and share your perspective
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button
-                  onClick={navigateToCamera}
-                  className="flex-1 sm:flex-none bg-orange-500 hover:bg-orange-600"
-                >
-                  <Camera className="mr-2 h-4 w-4" />
-                  Open Camera
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={navigateToGallery}
-                  className="flex-1 sm:flex-none"
-                >
-                  View Gallery
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     );
