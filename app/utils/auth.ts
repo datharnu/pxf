@@ -28,6 +28,11 @@ export const isAuthenticated = (): boolean => {
   return !!token;
 };
 
+export const isUserAuthenticated = (): boolean => {
+  if (typeof window === "undefined") return false;
+  return document.cookie.includes("token=");
+};
+
 // Clear all authentication data
 export const clearAuthData = (): void => {
   // Clear cookies
@@ -54,4 +59,3 @@ export const getAuthHeader = (): Record<string, string> => {
     Authorization: `Bearer ${token}`,
   };
 };
-

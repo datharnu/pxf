@@ -321,7 +321,10 @@ function MyEventsContent() {
                   {/* Action Buttons */}
                   <div className="flex items-center gap-5 ">
                     <div className="bg-[#353935] px-6 rounded-full py-2 ">
-                      <button className="flex items-center text-sm text-white cursor-pointer">
+                      <button
+                        onClick={() => router.push(`/event/${event.eventSlug}`)}
+                        className="flex items-center text-sm text-white cursor-pointer"
+                      >
                         <ImageIcon className="w-3 h-3" />
                       </button>
                     </div>

@@ -1,8 +1,145 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// components/UploadModal.tsx
-import { Button } from "@/components/ui/button";
-import { Upload, X, Calendar, User, Camera } from "lucide-react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// /* eslint-disable @typescript-eslint/no-unused-vars */
+// // components/UploadModal.tsx
+// import { Button } from "@/components/ui/button";
+// import { Upload, X, Calendar, User, Camera } from "lucide-react";
 
+// interface UploadModalProps {
+//   isOpen: boolean;
+//   onClose: () => void;
+//   eventData: {
+//     id: string;
+//     title: string;
+//     description?: string;
+//     eventDate: string;
+//     photoCapLimit: number;
+//     creator: {
+//       fullname: string;
+//     };
+//   };
+//   onAddShots: () => void;
+// }
+
+// export function UploadModal({
+//   isOpen,
+//   onClose,
+//   eventData,
+//   onAddShots,
+// }: UploadModalProps) {
+//   if (!isOpen) return null;
+
+//   const formatDate = (dateString: string) => {
+//     const date = new Date(dateString);
+//     return date.toLocaleDateString("en-US", {
+//       year: "numeric",
+//       month: "short",
+//       day: "numeric",
+//     });
+//   };
+
+//   return (
+//     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+//       <div className="bg-zinc-900 rounded-2xl max-w-md w-full shadow-2xl shadow-amber-500/10 border border-zinc-800/50 overflow-hidden">
+//         {/* Header */}
+//         <div className="relative p-6 bg-gradient-to-r from-amber-500/10 to-amber-600/10 border-b border-zinc-800/50">
+//           <button
+//             onClick={onClose}
+//             className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-200 transition-colors duration-200 p-1 hover:bg-zinc-800/50 rounded-lg"
+//           >
+//             <X className="w-5 h-5" />
+//           </button>
+
+//           <div className="text-center pr-8">
+//             <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30">
+//               <Camera className="h-6 w-6 text-zinc-900" />
+//             </div>
+//             <h2 className="text-xl font-semibold text-zinc-50 mb-2">
+//               {eventData.title}
+//             </h2>
+//             <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 rounded-full">
+//               <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+//               <p className="text-sm text-amber-300 font-medium">
+//                 {eventData.photoCapLimit} photos per person
+//               </p>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Content */}
+//         <div className="p-6 space-y-5">
+//           {/* Event Details */}
+//           <div className="space-y-3">
+//             <div className="flex items-center gap-3 text-sm text-zinc-300">
+//               <div className="w-8 h-8 bg-zinc-800/50 rounded-lg flex items-center justify-center">
+//                 <Calendar className="w-4 h-4 text-amber-400" />
+//               </div>
+//               <span>{formatDate(eventData.eventDate)}</span>
+//             </div>
+
+//             <div className="flex items-center gap-3 text-sm text-zinc-300">
+//               <div className="w-8 h-8 bg-zinc-800/50 rounded-lg flex items-center justify-center">
+//                 <User className="w-4 h-4 text-amber-400" />
+//               </div>
+//               <span>Hosted by {eventData.creator.fullname}</span>
+//             </div>
+//           </div>
+
+//           {/* Description */}
+//           {eventData.description && (
+//             <div className="p-4 bg-zinc-800/30 rounded-xl border border-zinc-700/30">
+//               <p className="text-sm text-zinc-300 leading-relaxed">
+//                 {eventData.description}
+//               </p>
+//             </div>
+//           )}
+
+//           {/* Guidelines */}
+//           <div className="p-4 bg-gradient-to-r from-amber-500/10 to-amber-600/5 rounded-xl border border-amber-500/20">
+//             <div className="flex items-start gap-3">
+//               <div className="w-6 h-6 bg-amber-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+//                 <Upload className="w-3 h-3 text-amber-400" />
+//               </div>
+//               <div>
+//                 <p className="text-xs font-medium text-amber-300 mb-1">
+//                   Upload Guidelines
+//                 </p>
+//                 <p className="text-xs text-zinc-400 leading-relaxed">
+//                   You can upload up to {eventData.photoCapLimit} photos to this
+//                   event. Make sure your photos follow the event guidelines.
+//                 </p>
+//               </div>
+//             </div>
+//           </div>
+//         </div>
+
+//         {/* Footer */}
+//         <div className="p-6 pt-0 space-y-3">
+//           <Button
+//             onClick={onAddShots}
+//             className="w-full h-12 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-zinc-900 font-semibold shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+//           >
+//             <Upload className="w-5 h-5 mr-2" />
+//             Add Your Shots
+//           </Button>
+
+//           <Button
+//             variant="ghost"
+//             onClick={onClose}
+//             className="w-full h-10 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-all duration-200"
+//           >
+//             Maybe later
+//           </Button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Upload, X, AlertCircle, CheckCircle } from "lucide-react";
+import { api } from "@/api/axios";
+import { useQuery } from "@tanstack/react-query";
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -19,21 +156,256 @@ interface UploadModalProps {
   onAddShots: () => void;
 }
 
+interface CloudinarySignatureResponse {
+  success: boolean;
+  signature: string;
+  timestamp: number;
+  cloudName: string;
+  apiKey: string;
+  folder: string;
+  remainingUploads: number;
+  signedParams: {
+    folder: string;
+    timestamp: number;
+    quality: string;
+    fetch_format: string;
+  };
+}
+
+interface CloudinaryUploadResult {
+  public_id: string;
+  bytes: number;
+  format: string;
+  height: number;
+  width: number;
+  url: string;
+  secure_url: string;
+  original_filename: string;
+  resource_type: string;
+  created_at: string;
+}
+
+interface MediaUrlData {
+  url: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  publicId: string;
+}
+
 export function UploadModal({
   isOpen,
   onClose,
   eventData,
   onAddShots,
 }: UploadModalProps) {
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [remainingUploads, setRemainingUploads] = useState(
+    eventData.photoCapLimit
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: uploadCount } = useQuery({
+    queryKey: ["totalViews"],
+    queryFn: async () => {
+      const response = await api.get(`/media/event/${eventData.id}/my-uploads`);
+      console.log("Remaining Upload", uploadCount.stats.remainingUploads);
+      return response.data;
+    },
+  });
+
   if (!isOpen) return null;
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+  // const formatDate = (dateString: string) => {
+  //   const date = new Date(dateString);
+  //   return date.toLocaleDateString("en-US", {
+  //     year: "numeric",
+  //     month: "short",
+  //     day: "numeric",
+  //   });
+  // };
+
+  const getCloudinarySignature =
+    async (): Promise<CloudinarySignatureResponse> => {
+      try {
+        const response = await api.get(
+          `/media/event/${eventData.id}/cloudinary-signature`
+        );
+        return response.data;
+      } catch (error: any) {
+        console.error("Error getting Cloudinary signature:", error);
+        throw new Error(
+          error.response?.data?.message || "Failed to get Cloudinary signature"
+        );
+      }
+    };
+
+  const uploadToCloudinary = async (
+    file: File,
+    signatureData: CloudinarySignatureResponse
+  ): Promise<CloudinaryUploadResult> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("api_key", signatureData.apiKey);
+    formData.append("timestamp", signatureData.timestamp.toString());
+    formData.append("signature", signatureData.signature);
+
+    // Add ALL parameters that were included in the signature
+    formData.append("folder", signatureData.folder);
+    // formData.append("quality", signatureData.signedParams.quality);
+    // formData.append("fetch_format", signatureData.signedParams.fetch_format);
+
+    // DO NOT add any other parameters that weren't signed
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/auto/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Cloudinary upload failed: ${error}`);
+    }
+
+    return response.json();
+  };
+
+  const submitMediaUrls = async (mediaUrls: MediaUrlData[]) => {
+    try {
+      const response = await api.post(
+        `/media/event/${eventData.id}/submit-media`,
+        { mediaUrls }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("Error submitting media URLs:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to submit media URLs"
+      );
+    }
+  };
+
+  // const handleUpload = async (eventId: string) => {
+  //   try {const response = await api.get(`/media/event/${eventData.id}/my-uploads`);
+  //     return response.data;
+  //   } catch (error: any) {
+  //     console.error("Error fetching my uploads:", error);
+  //     throw new Error(
+  //       error.response?.data?.message || "Failed to fetch my uploads"
+  //     );
+  //   }
+  // }
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    setUploadStatus("idle");
+    setUploadProgress(0);
+    setErrorMessage("");
+
+    try {
+      // Get Cloudinary signature first
+      const signatureResponse = await getCloudinarySignature();
+
+      if (!signatureResponse.success) {
+        throw new Error("Failed to get upload credentials");
+      }
+
+      setRemainingUploads(signatureResponse.remainingUploads);
+
+      // Check if user has remaining uploads
+      if (signatureResponse.remainingUploads <= 0) {
+        throw new Error(
+          `You have reached your upload limit of ${eventData.photoCapLimit} files for this event`
+        );
+      }
+
+      // Check if trying to upload more than remaining uploads
+      if (files.length > signatureResponse.remainingUploads) {
+        throw new Error(
+          `You can only upload ${signatureResponse.remainingUploads} more file${
+            signatureResponse.remainingUploads !== 1 ? "s" : ""
+          }`
+        );
+      }
+
+      // Upload files to Cloudinary with progress tracking
+      const results: CloudinaryUploadResult[] = [];
+      let completed = 0;
+      const total = files.length;
+
+      for (const file of Array.from(files)) {
+        try {
+          const result = await uploadToCloudinary(file, signatureResponse);
+          results.push(result);
+          completed++;
+          setUploadProgress(Math.round((completed / total) * 100));
+        } catch (error) {
+          console.error("Failed to upload file:", file.name, error);
+          throw new Error(
+            `Failed to upload ${file.name}: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`
+          );
+        }
+      }
+
+      // Prepare media data for backend submission
+      const mediaUrls: MediaUrlData[] = results.map((result) => ({
+        url: result.secure_url,
+        fileName: result.original_filename,
+        fileSize: result.bytes,
+        mimeType:
+          result.resource_type === "image"
+            ? `image/${result.format}`
+            : `video/${result.format}`,
+        publicId: result.public_id,
+      }));
+
+      // Submit to backend
+      const submitResponse = await submitMediaUrls(mediaUrls);
+
+      if (submitResponse.success) {
+        setUploadStatus("success");
+        setRemainingUploads(submitResponse.uploadStats.remainingUploads);
+        onAddShots(); // Refresh the parent component
+
+        // Close modal after a brief delay
+        setTimeout(() => {
+          onClose();
+          setIsUploading(false);
+          setUploadProgress(0);
+          setUploadStatus("idle");
+          // Reset file input
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+        }, 1500);
+      } else {
+        throw new Error("Failed to submit media URLs");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      setUploadStatus("error");
+      setErrorMessage(error instanceof Error ? error.message : "Upload failed");
+      setIsUploading(false);
+    }
+  };
+
+  const triggerFileInput = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   return (
@@ -43,22 +415,20 @@ export function UploadModal({
         <div className="relative p-6 bg-gradient-to-r from-amber-500/10 to-amber-600/10 border-b border-zinc-800/50">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-200 transition-colors duration-200 p-1 hover:bg-zinc-800/50 rounded-lg"
+            disabled={isUploading}
+            className="absolute top-4 right-4 text-zinc-400 hover:text-zinc-200 transition-colors duration-200 p-1 hover:bg-zinc-800/50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <X className="w-5 h-5" />
           </button>
 
           <div className="text-center pr-8">
-            <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30">
-              <Camera className="h-6 w-6 text-zinc-900" />
-            </div>
             <h2 className="text-xl font-semibold text-zinc-50 mb-2">
               {eventData.title}
             </h2>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 rounded-full">
-              <div className="w-2 h-2 bg-amber-400 rounded-full"></div>
+            <div className="inline-flex items-center gap-2 px-3 py-1  ">
               <p className="text-sm text-amber-300 font-medium">
-                {eventData.photoCapLimit} photos per person
+                {uploadCount.stats.remainingUploads} of{" "}
+                {eventData.photoCapLimit} uploads remaining
               </p>
             </div>
           </div>
@@ -66,34 +436,44 @@ export function UploadModal({
 
         {/* Content */}
         <div className="p-6 space-y-5">
-          {/* Event Details */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 text-sm text-zinc-300">
-              <div className="w-8 h-8 bg-zinc-800/50 rounded-lg flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-amber-400" />
-              </div>
-              <span>{formatDate(eventData.eventDate)}</span>
-            </div>
+          <p className="text-sm text-zinc-400 text-center">
+            Select you best {uploadCount.stats.remainingUploads} Photos! or
+            Videos!
+          </p>
 
-            <div className="flex items-center gap-3 text-sm text-zinc-300">
-              <div className="w-8 h-8 bg-zinc-800/50 rounded-lg flex items-center justify-center">
-                <User className="w-4 h-4 text-amber-400" />
+          {/* Upload Status */}
+          {isUploading && (
+            <div className="space-y-3">
+              <div className="w-full bg-zinc-800/50 rounded-full h-2.5">
+                <div
+                  className="bg-amber-500 h-2.5 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
               </div>
-              <span>Hosted by {eventData.creator.fullname}</span>
-            </div>
-          </div>
-
-          {/* Description */}
-          {eventData.description && (
-            <div className="p-4 bg-zinc-800/30 rounded-xl border border-zinc-700/30">
-              <p className="text-sm text-zinc-300 leading-relaxed">
-                {eventData.description}
+              <p className="text-xs text-center text-zinc-400">
+                Uploading... {uploadProgress}%
               </p>
             </div>
           )}
 
+          {uploadStatus === "success" && (
+            <div className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+              <p className="text-sm text-green-300">
+                Upload completed successfully!
+              </p>
+            </div>
+          )}
+
+          {uploadStatus === "error" && (
+            <div className="flex items-center gap-3 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+              <p className="text-sm text-red-300">{errorMessage}</p>
+            </div>
+          )}
+
           {/* Guidelines */}
-          <div className="p-4 bg-gradient-to-r from-amber-500/10 to-amber-600/5 rounded-xl border border-amber-500/20">
+          {/* <div className="p-4 bg-gradient-to-r from-amber-500/10 to-amber-600/5 rounded-xl border border-amber-500/20">
             <div className="flex items-start gap-3">
               <div className="w-6 h-6 bg-amber-500/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                 <Upload className="w-3 h-3 text-amber-400" />
@@ -102,29 +482,59 @@ export function UploadModal({
                 <p className="text-xs font-medium text-amber-300 mb-1">
                   Upload Guidelines
                 </p>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  You can upload up to {eventData.photoCapLimit} photos to this
-                  event. Make sure your photos follow the event guidelines.
-                </p>
+                <ul className="text-xs text-zinc-400 leading-relaxed list-disc pl-4 space-y-1">
+                  <li>
+                    You can upload up to {eventData.photoCapLimit} files to this
+                    event
+                  </li>
+                  <li>
+                    Supported formats: JPG, PNG, GIF, WebP, MP4, WebM, MOV
+                  </li>
+                  <li>Maximum file size: 20MB per file</li>
+                  <li>Make sure your content follows the event guidelines</li>
+                </ul>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Footer */}
         <div className="p-6 pt-0 space-y-3">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            multiple
+            accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime"
+            className="hidden"
+            disabled={isUploading || remainingUploads <= 0}
+          />
+
           <Button
-            onClick={onAddShots}
-            className="w-full h-12 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-zinc-900 font-semibold shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+            onClick={triggerFileInput}
+            disabled={isUploading || remainingUploads <= 0}
+            className="w-full h-12 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-zinc-900 font-semibold shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
-            <Upload className="w-5 h-5 mr-2" />
-            Add Your Shots
+            {isUploading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-zinc-900 mr-2"></div>
+                Uploading... {uploadProgress}%
+              </>
+            ) : remainingUploads <= 0 ? (
+              "Upload Limit Reached"
+            ) : (
+              <>
+                <Upload className="w-5 h-5 mr-2" />
+                Add Your Media
+              </>
+            )}
           </Button>
 
           <Button
             variant="ghost"
             onClick={onClose}
-            className="w-full h-10 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-all duration-200"
+            disabled={isUploading}
+            className="w-full h-10 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Maybe later
           </Button>

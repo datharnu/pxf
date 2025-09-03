@@ -1,8 +1,1612 @@
+// /* eslint-disable @typescript-eslint/no-unused-vars */
+// /* eslint-disable @typescript-eslint/no-explicit-any */
+// "use client";
+
+// import React, { useState, useEffect, useRef } from "react";
+// import { useRouter, useParams } from "next/navigation";
+// import { Button } from "@/components/ui/button";
+// import { Input } from "@/components/ui/input";
+// import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+// import {
+//   Lock,
+//   Eye,
+//   EyeOff,
+//   Loader2,
+//   Camera,
+//   ArrowLeft,
+//   X,
+//   ArrowRightIcon,
+//   Plus,
+//   Images,
+//   Download,
+//   DoorClosedLocked,
+//   ArrowRight,
+//   User,
+//   Calendar,
+//   Upload,
+//   Grid3X3,
+//   List,
+//   MoreVertical,
+//   Share2,
+//   Check,
+//   Play,
+//   Video,
+//   ChevronLeft,
+//   ChevronRight,
+// } from "lucide-react";
+// import { toast } from "sonner";
+// import Image from "next/image";
+// import { api } from "@/api/axios";
+// import EventFlyer from "../components/EventFlyer";
+// import { UploadModal } from "../components/UploadModal";
+// import { BottomNav } from "../components/BottomNav";
+// import { EventMediaResponse } from "@/types/media";
+// import { SelectionActions } from "../components/SelectedAction";
+
+// // Types
+// interface EventData {
+//   id: string;
+//   title: string;
+//   description: string;
+//   eventFlyer?: string;
+//   guestLimit: string;
+//   photoCapLimit: string;
+//   isPasswordProtected: boolean;
+//   eventDate: string;
+//   eventSlug: string;
+//   creator: {
+//     id: string;
+//     fullname: string;
+//     email: string;
+//   };
+// }
+
+// interface MediaItem {
+//   id: string;
+//   eventId: string;
+//   uploadedBy: string;
+//   mediaType: string;
+//   mediaUrl: string;
+//   fileName: string;
+//   fileSize: string;
+//   mimeType: string;
+//   cloudinaryPublicId: string;
+//   isActive: boolean;
+//   createdAt: string;
+//   updatedAt: string;
+//   uploader: {
+//     id: string;
+//     fullname: string;
+//   };
+// }
+
+// interface MediaResponse {
+//   success: boolean;
+//   message: string;
+//   media: MediaItem[];
+//   pagination: {
+//     page: number;
+//     limit: number;
+//     total: number;
+//     totalPages: number;
+//   };
+//   eventInfo: {
+//     id: string;
+//     title: string;
+//     photoCapLimit: string;
+//   };
+//   participantStats: {
+//     totalParticipants: number;
+//     totalMedia: number;
+//     totalPhotos: number;
+//     totalVideos: number;
+//     mediaBreakdown: {
+//       image: number;
+//       video: number;
+//     };
+//   };
+// }
+
+// interface ApiResponse<T = any> {
+//   success: boolean;
+//   message: string;
+//   event?: T;
+//   requiresPassword?: boolean;
+// }
+
+// class ApiError extends Error {
+//   constructor(message: string) {
+//     super(message);
+//     this.name = "ApiError";
+//   }
+// }
+
+// // Selection Actions Component
+
+// // Preview Modal Component
+// // Add these utility functions at the top level, before the PreviewModal component
+// const isVideo = (mimeType: string) => {
+//   return mimeType.startsWith("video/");
+// };
+
+// const isImage = (mimeType: string) => {
+//   return mimeType.startsWith("image/");
+// };
+
+// // Preview Modal Component
+// const PreviewModal = ({
+//   isOpen,
+//   onClose,
+//   media,
+//   allMedia,
+// }: {
+//   isOpen: boolean;
+//   onClose: () => void;
+//   media: MediaItem | null;
+//   allMedia: MediaItem[];
+// }) => {
+//   const [currentIndex, setCurrentIndex] = useState(0);
+
+//   useEffect(() => {
+//     if (media && allMedia.length > 0) {
+//       const index = allMedia.findIndex((m) => m.id === media.id);
+//       if (index !== -1) {
+//         setCurrentIndex(index);
+//       }
+//     }
+//   }, [media, allMedia]);
+
+//   const goToPrevious = () => {
+//     setCurrentIndex((prev) => (prev === 0 ? allMedia.length - 1 : prev - 1));
+//   };
+
+//   const goToNext = () => {
+//     setCurrentIndex((prev) => (prev === allMedia.length - 1 ? 0 : prev + 1));
+//   };
+
+//   useEffect(() => {
+//     const handleKeyDown = (e: KeyboardEvent) => {
+//       if (e.key === "Escape") onClose();
+//       if (e.key === "ArrowLeft") goToPrevious();
+//       if (e.key === "ArrowRight") goToNext();
+//     };
+
+//     if (isOpen) {
+//       document.addEventListener("keydown", handleKeyDown);
+//       document.body.style.overflow = "hidden";
+//     }
+
+//     return () => {
+//       document.removeEventListener("keydown", handleKeyDown);
+//       document.body.style.overflow = "unset";
+//     };
+//   }, [isOpen, onClose, goToPrevious, goToNext]);
+
+//   if (!isOpen || !media || allMedia.length === 0) return null;
+
+//   const currentMedia = allMedia[currentIndex];
+//   const isVideoFile = isVideo(currentMedia.mimeType);
+
+//   return (
+//     <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+//       <button
+//         onClick={onClose}
+//         className="absolute top-4 right-4 z-50 p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
+//       >
+//         <X className="w-6 h-6 text-white" />
+//       </button>
+
+//       <button
+//         onClick={goToPrevious}
+//         className="absolute left-4 z-50 p-3 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
+//       >
+//         <ChevronLeft className="w-6 h-6 text-white" />
+//       </button>
+
+//       <button
+//         onClick={goToNext}
+//         className="absolute right-4 z-50 p-3 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
+//       >
+//         <ChevronRight className="w-6 h-6 text-white" />
+//       </button>
+
+//       <div className="relative w-full h-full max-w-5xl max-h-[90vh] flex items-center justify-center">
+//         {isVideoFile ? (
+//           <video
+//             src={currentMedia.mediaUrl}
+//             className="max-w-full max-h-full object-contain"
+//             controls
+//             autoPlay
+//           />
+//         ) : (
+//           <Image
+//             src={currentMedia.mediaUrl}
+//             alt={currentMedia.fileName}
+//             fill
+//             className="object-contain"
+//           />
+//         )}
+//       </div>
+
+//       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-4 py-2 rounded-lg">
+//         {currentIndex + 1} / {allMedia.length}
+//       </div>
+//     </div>
+//   );
+// };
+
+// // Media Actions Menu Component (updated)
+// const MediaActionsMenu = ({
+//   media,
+//   isOpen,
+//   onClose,
+//   onDownload,
+//   onShare,
+//   onPreview, // New prop for preview
+// }: {
+//   media: MediaItem;
+//   isOpen: boolean;
+//   onClose: () => void;
+//   onDownload: () => void;
+//   onShare: () => void;
+//   onPreview: () => void; // New function for preview
+// }) => {
+//   const menuRef = useRef<HTMLDivElement>(null);
+
+//   useEffect(() => {
+//     const handleClickOutside = (event: MouseEvent) => {
+//       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+//         onClose();
+//       }
+//     };
+
+//     if (isOpen) {
+//       document.addEventListener("mousedown", handleClickOutside);
+//     }
+
+//     return () => {
+//       document.removeEventListener("mousedown", handleClickOutside);
+//     };
+//   }, [isOpen, onClose]);
+
+//   if (!isOpen) return null;
+
+//   return (
+//     <div
+//       ref={menuRef}
+//       className="absolute top-12 right-0  bg-zinc-800/95 backdrop-blur-lg border border-zinc-700/50 rounded-xl shadow-2xl py-2 min-h-20 min-w-40 z-50"
+//     >
+//       <button
+//         onClick={onPreview}
+//         className="w-full px-4 py-2 text-left text-zinc-200 hover:bg-zinc-700/50 transition-colors flex items-center gap-3"
+//       >
+//         <Eye className="w-4 h-4" />
+//         Preview
+//       </button>
+//       <button
+//         onClick={onDownload}
+//         className="w-full px-4 py-2 text-left text-zinc-200 hover:bg-zinc-700/50 transition-colors flex items-center gap-3"
+//       >
+//         <Download className="w-4 h-4" />
+//         Download
+//       </button>
+//       <button
+//         onClick={onShare}
+//         className="w-full px-4 py-2 text-left text-zinc-200 hover:bg-zinc-700/50 transition-colors flex items-center gap-3"
+//       >
+//         <Share2 className="w-4 h-4" />
+//         Share
+//       </button>
+//     </div>
+//   );
+// };
+
+// const ShareModal = ({
+//   isOpen,
+//   onClose,
+//   media,
+// }: {
+//   isOpen: boolean;
+//   onClose: () => void;
+//   media: MediaItem[];
+// }) => {
+//   if (!isOpen) return null;
+
+//   // Function to share media files directly
+//   // Helper to check if MIME is video
+//   const isVideo = (mimeType: string) => mimeType.startsWith("video/");
+
+//   const shareMediaFiles = async (platform: string) => {
+//     try {
+//       if (media.length === 1) {
+//         const mediaItem = media[0];
+
+//         // Fetch the media file
+//         const response = await fetch(mediaItem.mediaUrl);
+//         const blob = await response.blob();
+//         const file = new File([blob], mediaItem.fileName, {
+//           type: mediaItem.mimeType,
+//         });
+
+//         const shareData: ShareData = {
+//           files: [file],
+//           title: mediaItem.fileName,
+//           text: `Check out this ${
+//             isVideo(mediaItem.mimeType) ? "video" : "photo"
+//           } from the event!`,
+//         };
+
+//         // ✅ Share actual file if supported
+//         if (navigator.canShare && navigator.canShare(shareData)) {
+//           await navigator.share(shareData);
+//         } else {
+//           // ❌ Fallback to platform link
+//           const text = `Check out this ${
+//             isVideo(mediaItem.mimeType) ? "video" : "photo"
+//           } from the event!\n${mediaItem.mediaUrl}`;
+
+//           if (platform === "whatsapp") {
+//             window.open(
+//               `https://wa.me/?text=${encodeURIComponent(text)}`,
+//               "_blank"
+//             );
+//           } else if (platform === "twitter") {
+//             window.open(
+//               `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+//                 text
+//               )}`,
+//               "_blank"
+//             );
+//           } else if (platform === "facebook") {
+//             window.open(
+//               `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+//                 mediaItem.mediaUrl
+//               )}`,
+//               "_blank"
+//             );
+//           }
+//         }
+//       } else {
+//         // Multiple items → only share links
+//         const text = `Check out these ${media.length} ${
+//           media[0].mimeType.startsWith("video/") ? "videos" : "photos"
+//         } from the event!`;
+//         const urls = media.map((m) => m.mediaUrl).join("\n");
+
+//         if (platform === "whatsapp") {
+//           window.open(
+//             `https://wa.me/?text=${encodeURIComponent(text + "\n" + urls)}`,
+//             "_blank"
+//           );
+//         } else if (platform === "twitter") {
+//           window.open(
+//             `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+//               text
+//             )}&url=${encodeURIComponent(urls)}`,
+//             "_blank"
+//           );
+//         } else if (platform === "facebook") {
+//           window.open(
+//             `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+//               urls
+//             )}`,
+//             "_blank"
+//           );
+//         }
+//       }
+
+//       toast.success("Shared successfully!");
+//       onClose();
+//     } catch (error) {
+//       console.error("Error sharing:", error);
+//       toast.error("Failed to share. Please try again.");
+//     }
+//   };
+
+//   const copyToClipboard = async () => {
+//     try {
+//       const urls = media.map((m) => m.mediaUrl).join("\n");
+//       await navigator.clipboard.writeText(urls);
+//       toast.success("Links copied to clipboard!");
+//       onClose();
+//     } catch (err) {
+//       toast.error("Failed to copy links");
+//     }
+//   };
+
+//   return (
+//     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-4">
+//       <div className="bg-zinc-900 rounded-t-3xl md:rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto">
+//         <div className="p-6">
+//           <div className="flex items-center justify-between mb-6">
+//             <h3 className="text-xl font-semibold text-zinc-50">
+//               Share {media.length > 1 ? `${media.length} items` : "item"}
+//             </h3>
+//             <button
+//               onClick={onClose}
+//               className="p-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50 rounded-lg transition-colors"
+//             >
+//               <X className="w-5 h-5" />
+//             </button>
+//           </div>
+
+//           <div className="space-y-3">
+//             <button
+//               onClick={() => shareMediaFiles("whatsapp")}
+//               className="w-full flex items-center gap-4 p-4 bg-green-600/10 hover:bg-green-600/20 border border-green-600/20 rounded-xl transition-colors"
+//             >
+//               <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
+//                 <Share2 className="w-5 h-5 text-white" />
+//               </div>
+//               <div className="text-left">
+//                 <p className="font-medium text-zinc-200">WhatsApp</p>
+//                 <p className="text-sm text-zinc-400">Share to WhatsApp</p>
+//               </div>
+//             </button>
+
+//             <button
+//               onClick={() => shareMediaFiles("twitter")}
+//               className="w-full flex items-center gap-4 p-4 bg-blue-600/10 hover:bg-blue-600/20 border border-blue-600/20 rounded-xl transition-colors"
+//             >
+//               <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+//                 <Share2 className="w-5 h-5 text-white" />
+//               </div>
+//               <div className="text-left">
+//                 <p className="font-medium text-zinc-200">Twitter</p>
+//                 <p className="text-sm text-zinc-400">Share to Twitter</p>
+//               </div>
+//             </button>
+
+//             <button
+//               onClick={() => shareMediaFiles("facebook")}
+//               className="w-full flex items-center gap-4 p-4 bg-blue-800/10 hover:bg-blue-800/20 border border-blue-800/20 rounded-xl transition-colors"
+//             >
+//               <div className="w-10 h-10 bg-blue-800 rounded-full flex items-center justify-center">
+//                 <Share2 className="w-5 h-5 text-white" />
+//               </div>
+//               <div className="text-left">
+//                 <p className="font-medium text-zinc-200">Facebook</p>
+//                 <p className="text-sm text-zinc-400">Share to Facebook</p>
+//               </div>
+//             </button>
+
+//             <button
+//               onClick={copyToClipboard}
+//               className="w-full flex items-center gap-4 p-4 bg-zinc-700/20 hover:bg-zinc-700/40 border border-zinc-700/30 rounded-xl transition-colors"
+//             >
+//               <div className="w-10 h-10 bg-zinc-600 rounded-full flex items-center justify-center">
+//                 <Download className="w-5 h-5 text-white" />
+//               </div>
+//               <div className="text-left">
+//                 <p className="font-medium text-zinc-200">Copy Links</p>
+//                 <p className="text-sm text-zinc-400">Copy to clipboard</p>
+//               </div>
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// // EventFlyer Component
+// interface EventFlyerProps {
+//   flyer: string;
+//   title: string;
+//   date: string;
+//   onTakePhotos: () => void;
+//   onClose: () => void;
+// }
+
+// export default function EventSlugPage() {
+//   const router = useRouter();
+//   const params = useParams();
+
+//   // Extract the slug from the URL path
+//   const slug =
+//     typeof window !== "undefined"
+//       ? window.location.pathname.split("/").pop()
+//       : "";
+
+//   console.log("Extracted slug from URL:", slug);
+
+//   const [eventData, setEventData] = useState<EventData | null>(null);
+//   const [mediaData, setMediaData] = useState<EventMediaResponse | null>(null);
+//   const [password, setPassword] = useState("");
+//   const [showPassword, setShowPassword] = useState(false);
+//   const [loading, setLoading] = useState(true);
+//   const [mediaLoading, setMediaLoading] = useState(false);
+//   const [verifying, setVerifying] = useState(false);
+//   const [needsPassword, setNeedsPassword] = useState(false);
+//   const [error, setError] = useState("");
+//   const [showFlyer, setShowFlyer] = useState(true);
+//   const [showUploadModal, setShowUploadModal] = useState(false);
+//   const [activeTab, setActiveTab] = useState("all");
+//   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+//   // Selection and sharing states
+//   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
+//   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+//   const [showShareModal, setShowShareModal] = useState(false);
+//   const [shareMedia, setShareMedia] = useState<MediaItem[]>([]);
+//   const [previewMedia, setPreviewMedia] = useState<MediaItem | null>(null);
+//   const [showPreviewModal, setShowPreviewModal] = useState(false);
+//   // Add function to handle preview
+//   const handlePreview = (media: MediaItem) => {
+//     setPreviewMedia(media);
+//     setShowPreviewModal(true);
+//     setActiveMenuId(null);
+//   };
+
+//   // Single function to handle event access
+//   const getEventAccess = async (
+//     slug: string,
+//     password?: string
+//   ): Promise<ApiResponse<EventData>> => {
+//     try {
+//       console.log(`Getting event access for slug: ${slug}`);
+
+//       const response = await api.post(`/events/access/${slug}`, {
+//         ...(password && { password }),
+//       });
+
+//       console.log("Event access response:", response.data);
+//       return response.data;
+//     } catch (error: any) {
+//       console.error("Event access error:", {
+//         status: error.response?.status,
+//         data: error.response?.data,
+//         message: error.message,
+//       });
+
+//       if (error.response?.status === 401) {
+//         const errorData = error.response.data;
+//         return {
+//           success: false,
+//           requiresPassword: true,
+//           message: errorData?.message || "Event password required",
+//         };
+//       }
+
+//       if (error.response?.status === 404) {
+//         throw new ApiError("Event not found or inactive");
+//       }
+
+//       if (error.response?.status === 400) {
+//         const errorData = error.response.data;
+//         return {
+//           success: false,
+//           requiresPassword: true,
+//           message: errorData?.message || "Invalid password",
+//         };
+//       }
+
+//       return {
+//         success: false,
+//         requiresPassword: false,
+//         message: error.response?.data?.message || "Failed to access event",
+//       };
+//     }
+//   };
+
+//   // Function to fetch event media
+//   const fetchEventMedia = async (eventId: string) => {
+//     try {
+//       setMediaLoading(true);
+//       console.log(`Fetching media for event: ${eventId}`);
+
+//       const response = await api.get(`/media/event/${slug}`);
+//       console.log("Media response:", response.data);
+
+//       if (response.data.success) {
+//         setMediaData(response.data);
+//       } else {
+//         console.warn("Failed to fetch media:", response.data.message);
+//       }
+//     } catch (error: any) {
+//       console.error("Error fetching media:", error);
+//     } finally {
+//       setMediaLoading(false);
+//     }
+//   };
+
+//   // Utility functions
+//   // const isVideo = (mimeType: string) => {
+//   //   return mimeType.startsWith("video/");
+//   // };
+
+//   // const isImage = (mimeType: string) => {
+//   //   return mimeType.startsWith("image/");
+//   // };
+
+//   // Download functions
+//   const downloadSingleMedia = async (media: MediaItem) => {
+//     try {
+//       toast.loading("Preparing download...");
+
+//       const response = await fetch(media.mediaUrl);
+//       const blob = await response.blob();
+
+//       const url = window.URL.createObjectURL(blob);
+//       const link = document.createElement("a");
+//       link.href = url;
+//       link.download = media.fileName;
+//       document.body.appendChild(link);
+//       link.click();
+//       document.body.removeChild(link);
+//       window.URL.revokeObjectURL(url);
+
+//       toast.dismiss();
+//       toast.success("Download started!");
+//     } catch (error) {
+//       toast.dismiss();
+//       toast.error("Failed to download file");
+//     }
+//   };
+
+//   const downloadMultipleMedia = async (mediaItems: MediaItem[]) => {
+//     try {
+//       toast.loading(`Preparing ${mediaItems.length} downloads...`);
+
+//       for (let i = 0; i < mediaItems.length; i++) {
+//         const media = mediaItems[i];
+
+//         setTimeout(async () => {
+//           try {
+//             const response = await fetch(media.mediaUrl);
+//             const blob = await response.blob();
+
+//             const url = window.URL.createObjectURL(blob);
+//             const link = document.createElement("a");
+//             link.href = url;
+//             link.download = media.fileName;
+//             document.body.appendChild(link);
+//             link.click();
+//             document.body.removeChild(link);
+//             window.URL.revokeObjectURL(url);
+//           } catch (error) {
+//             console.error(`Failed to download ${media.fileName}:`, error);
+//           }
+//         }, i * 500); // Stagger downloads by 500ms
+//       }
+
+//       setTimeout(() => {
+//         toast.dismiss();
+//         toast.success(`Started ${mediaItems.length} downloads!`);
+//       }, 1000);
+//     } catch (error) {
+//       toast.dismiss();
+//       toast.error("Failed to start downloads");
+//     }
+//   };
+
+//   // Media selection functions
+//   const toggleMediaSelection = (media: MediaItem) => {
+//     setSelectedMedia((prev) => {
+//       const isSelected = prev.some((item) => item.id === media.id);
+//       if (isSelected) {
+//         return prev.filter((item) => item.id !== media.id);
+//       } else {
+//         return [...prev, media];
+//       }
+//     });
+//   };
+
+//   const clearSelection = () => {
+//     setSelectedMedia([]);
+//   };
+
+//   const isMediaSelected = (mediaId: string) => {
+//     return selectedMedia.some((item) => item.id === mediaId);
+//   };
+
+//   // Share functions
+//   const handleShare = (media: MediaItem[]) => {
+//     setShareMedia(media);
+//     setShowShareModal(true);
+//     setActiveMenuId(null);
+//   };
+
+//   // Menu handlers
+//   const toggleMenu = (mediaId: string, event: React.MouseEvent) => {
+//     event.stopPropagation();
+//     setActiveMenuId(activeMenuId === mediaId ? null : mediaId);
+//   };
+
+//   const closeMenu = () => {
+//     setActiveMenuId(null);
+//   };
+
+//   const processEventAccess = async (
+//     slug: string | any,
+//     password?: string
+//   ): Promise<{
+//     success: boolean;
+//     needsPassword: boolean;
+//     event?: EventData;
+//     message?: string;
+//   }> => {
+//     try {
+//       console.log("Processing event access for slug:", slug);
+
+//       const result = await getEventAccess(slug, password);
+
+//       if (result.success && result.event) {
+//         console.log("Event access successful");
+//         return {
+//           success: true,
+//           needsPassword: false,
+//           event: result.event,
+//         };
+//       }
+
+//       if (result.requiresPassword) {
+//         console.log("Password required");
+//         return {
+//           success: false,
+//           needsPassword: true,
+//           message: result.message || "Password required",
+//         };
+//       }
+
+//       console.log("Event access failed");
+//       return {
+//         success: false,
+//         needsPassword: false,
+//         message: result.message || "Failed to access event",
+//       };
+//     } catch (error: any) {
+//       console.error("Process Event Access Error:", error);
+
+//       return {
+//         success: false,
+//         needsPassword: false,
+//         message: error.message || "An error occurred while accessing the event",
+//       };
+//     }
+//   };
+
+//   const handleUploadClick = () => {
+//     setShowUploadModal(true);
+//   };
+
+//   // Refresh media after upload
+//   const handleMediaUpload = () => {
+//     if (eventData) {
+//       fetchEventMedia(eventData.id);
+//     }
+//   };
+
+//   useEffect(() => {
+//     if (slug) {
+//       console.log("useEffect triggered with slug:", slug);
+//       checkEventAccess();
+//     } else {
+//       console.log("No slug found in URL");
+//       setError("No event specified");
+//       setLoading(false);
+//     }
+//   }, [slug]);
+
+//   // Fetch media when event data is loaded
+//   useEffect(() => {
+//     if (eventData && !needsPassword) {
+//       fetchEventMedia(eventData.id);
+//     }
+//   }, [eventData, needsPassword]);
+
+//   const checkEventAccess = async () => {
+//     try {
+//       console.log("checkEventAccess function called with slug:", slug);
+//       setLoading(true);
+//       setError("");
+
+//       const result = await processEventAccess(slug);
+//       console.log("processEventAccess returned:", result);
+
+//       if (result.success && result.event) {
+//         setEventData(result.event);
+//         setNeedsPassword(false);
+//       } else if (result.needsPassword) {
+//         setNeedsPassword(true);
+//       } else {
+//         setError(result.message || "Event not found");
+//       }
+//     } catch (err: any) {
+//       console.error("Error accessing event:", err);
+//       setError("Failed to load event. Please try again.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handlePasswordSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+
+//     if (!password.trim()) {
+//       toast.error("Please enter the event password");
+//       return;
+//     }
+
+//     try {
+//       setVerifying(true);
+
+//       const result = await processEventAccess(slug, password);
+
+//       if (result.success && result.event) {
+//         setEventData(result.event);
+//         setNeedsPassword(false);
+//         toast.success("Access granted! Welcome to the event.");
+//       } else if (result.needsPassword) {
+//         toast.error(result.message || "Invalid password");
+//       } else {
+//         toast.error(result.message || "Failed to access event");
+//       }
+//     } catch (err: any) {
+//       console.error("Error verifying password:", err);
+//       toast.error("Failed to verify password. Please try again.");
+//     } finally {
+//       setVerifying(false);
+//     }
+//   };
+
+//   const formatDate = (dateString: string) => {
+//     const date = new Date(dateString);
+
+//     const month = String(date.getMonth() + 1).padStart(2, "0");
+//     const day = String(date.getDate()).padStart(2, "0");
+//     const year = String(date.getFullYear()).slice(-2);
+
+//     return `${month}.${day}.${year}`;
+//   };
+
+//   const formatFileSize = (bytes: string) => {
+//     const size = parseInt(bytes);
+//     const units = ["B", "KB", "MB", "GB"];
+//     let unitIndex = 0;
+//     let fileSize = size;
+
+//     while (fileSize >= 1024 && unitIndex < units.length - 1) {
+//       fileSize /= 1024;
+//       unitIndex++;
+//     }
+
+//     return `${fileSize.toFixed(1)} ${units[unitIndex]}`;
+//   };
+
+//   const navigateToEvent = () => {
+//     router.push(`/event/${slug}`);
+//   };
+
+//   const handleTakePhotos = () => {
+//     setShowFlyer(false);
+//   };
+
+//   const handleCloseFlyerOrCancel = () => {
+//     setShowFlyer(false);
+//   };
+
+//   if (loading) {
+//     return (
+//       <div className="min-h-screen bg-primary flex items-center justify-center p-4">
+//         <Card className="w-full max-w-md bg-white">
+//           <CardContent className="flex items-center justify-center p-8">
+//             <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+//             <span className="ml-2 text-lg">Loading event...</span>
+//           </CardContent>
+//         </Card>
+//       </div>
+//     );
+//   }
+
+//   if (error) {
+//     return (
+//       <div className="min-h-screen bg-primary flex items-center justify-center p-4">
+//         <Card className="w-full max-w-md bg-white">
+//           <CardHeader className="text-center">
+//             <CardTitle className="text-red-600">Event Not Found</CardTitle>
+//           </CardHeader>
+//           <CardContent className="text-center">
+//             <p className="text-gray-600 mb-4">{error}</p>
+//             <div className="space-y-2">
+//               <Button onClick={() => router.push("/")} className="w-full">
+//                 Go Home
+//               </Button>
+//               <Button
+//                 variant="outline"
+//                 onClick={checkEventAccess}
+//                 className="w-full"
+//               >
+//                 Retry
+//               </Button>
+//             </div>
+//           </CardContent>
+//         </Card>
+//       </div>
+//     );
+//   }
+
+//   // Show password form if needed
+//   if (needsPassword) {
+//     return (
+//       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100/50 flex items-center justify-center p-4">
+//         <Card className="w-full max-w-md bg-zinc-900/95 backdrop-blur-sm border-amber-200/20 shadow-2xl shadow-amber-500/10">
+//           <CardHeader className="text-center pb-6">
+//             <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/30">
+//               <DoorClosedLocked className="h-8 w-8 text-zinc-900" />
+//             </div>
+//             <CardTitle className="text-2xl font-semibold text-zinc-50 mb-2">
+//               Secure Access
+//             </CardTitle>
+//             <p className="text-sm text-zinc-400 leading-relaxed">
+//               This event requires authentication. Enter your access code to
+//               continue.
+//             </p>
+//           </CardHeader>
+
+//           <CardContent className="space-y-6">
+//             <form onSubmit={handlePasswordSubmit} className="space-y-5">
+//               <div className="relative group">
+//                 <Input
+//                   type={showPassword ? "text" : "password"}
+//                   placeholder="Access code"
+//                   value={password}
+//                   onChange={(e) => setPassword(e.target.value)}
+//                   className="pr-12 h-12 bg-zinc-800/50 border-zinc-700/50 text-zinc-100 placeholder:text-zinc-500 focus:border-amber-400/50 focus:ring-amber-400/20 transition-all duration-200"
+//                   disabled={verifying}
+//                 />
+//                 <button
+//                   type="button"
+//                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-zinc-500 hover:text-amber-400 transition-colors duration-200 p-1"
+//                   onClick={() => setShowPassword(!showPassword)}
+//                   tabIndex={-1}
+//                 >
+//                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+//                 </button>
+//               </div>
+
+//               <Button
+//                 type="submit"
+//                 className="w-full h-12 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-zinc-900 font-medium shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+//                 disabled={verifying || !password.trim()}
+//               >
+//                 {verifying ? (
+//                   <>
+//                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+//                     Authenticating...
+//                   </>
+//                 ) : (
+//                   <>
+//                     <span>Access Event</span>
+//                     <ArrowRight className="ml-2 h-4 w-4" />
+//                   </>
+//                 )}
+//               </Button>
+//             </form>
+
+//             <div className="relative">
+//               <div className="absolute inset-0 flex items-center">
+//                 <div className="w-full border-t border-zinc-700/50"></div>
+//               </div>
+//               <div className="relative flex justify-center text-xs">
+//                 <span className="bg-zinc-900 px-3 text-zinc-500">or</span>
+//               </div>
+//             </div>
+
+//             <Button
+//               variant="ghost"
+//               onClick={() => router.push("/")}
+//               className="w-full h-11 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-all duration-200 group"
+//             >
+//               <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
+//               Return to homepage
+//             </Button>
+//           </CardContent>
+//         </Card>
+//       </div>
+//     );
+//   }
+
+//   // Show event flyer first if event data exists and showFlyer is true
+//   if (eventData && showFlyer && eventData.eventFlyer) {
+//     return (
+//       <EventFlyer
+//         flyer={eventData.eventFlyer}
+//         title={eventData.title}
+//         date={formatDate(eventData.eventDate)}
+//         onTakePhotos={handleTakePhotos}
+//         onClose={handleCloseFlyerOrCancel}
+//       />
+//     );
+//   }
+
+//   if (eventData) {
+//     return (
+//       <div className="min-h-screen bg-primary">
+//         <div className="max-w-7xl mx-auto">
+//           {/* Event Header */}
+//           <div className="relative">
+//             {/* Mobile Layout */}
+//             <div className="block md:hidden pb-5">
+//               <div className="flex flex-col gap-6">
+//                 {/* Event Flyer Thumbnail */}
+//                 {eventData.eventFlyer && (
+//                   <div className="w-full">
+//                     <div
+//                       className="relative aspect-[7/4] overflow-hidden cursor-pointer"
+//                       onClick={() => setShowFlyer(true)}
+//                     >
+//                       <Image
+//                         src={eventData.eventFlyer}
+//                         alt={eventData.title}
+//                         fill
+//                         className="object-cover hover:opacity-80 transition-opacity"
+//                       />
+//                       <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-primary to-transparent"></div>
+//                     </div>
+//                   </div>
+//                 )}
+
+//                 {/* Event Details */}
+//                 <div className="absolute px-3">
+//                   {/* Back Button */}
+//                   <div className="mt-5">
+//                     <button
+//                       onClick={() => router.push("/")}
+//                       className="text-white hover:bg-white/10 bg-[#f0eded]/30 backdrop-blur-sm rounded-full p-2 transition-all duration-200"
+//                     >
+//                       <ArrowLeft className="w-4 h-4" />
+//                     </button>
+//                   </div>
+//                   <div className="mt-14 space-y-3">
+//                     <p className="text-zinc-300 font-bold text-xs">
+//                       ENDING: {formatDate(eventData.eventDate)}
+//                     </p>
+//                     <p className="font-bold text-lg text-white ">
+//                       {eventData.title}
+//                     </p>
+//                   </div>
+
+//                   <div className="flex items-center gap-2 text-xs text-zinc-300 mt-3">
+//                     <p>
+//                       {mediaData?.participantStats?.totalPhotos || 0} Photos
+//                     </p>{" "}
+//                     .
+//                     <p>
+//                       {mediaData?.participantStats?.totalVideos || 0} Videos
+//                     </p>{" "}
+//                     .
+//                     <p>
+//                       {mediaData?.participantStats?.totalParticipants || 0}{" "}
+//                       Participants
+//                     </p>
+//                   </div>
+//                   <div className="flex gap-3 items-center">
+//                     <button
+//                       className="flex items-center gap-1 mt-4 bg-[#494949] backdrop-blur-sm px-3 py-2.5 rounded-full hover:bg-zinc-700/70 transition-all duration-200"
+//                       onClick={handleUploadClick}
+//                     >
+//                       <Plus className="w-4 h-4 text-amber-400" />
+//                       <span className="text-white text-xs font-bold">
+//                         Upload
+//                       </span>
+//                     </button>
+//                     <button
+//                       className="flex items-center gap-2 mt-4 bg-[#494949] backdrop-blur-sm px-3 py-2.5 rounded-full hover:bg-zinc-700/70 transition-all duration-200"
+//                       onClick={() =>
+//                         downloadMultipleMedia(mediaData?.media || [])
+//                       }
+//                     >
+//                       <Download className="w-4 h-4 text-amber-400" />
+//                       <span className="text-white text-xs font-bold">
+//                         Export
+//                       </span>
+//                     </button>
+//                     <button className="flex items-center gap-2 mt-4 bg-[#494949] backdrop-blur-sm px-3 py-2.5 rounded-full hover:bg-zinc-700/70 transition-all duration-200">
+//                       <Images className="w-4 h-4 text-amber-400" />
+//                       <span className="text-white text-xs font-bold">
+//                         Photobook
+//                       </span>
+//                     </button>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//             <hr className="border-t-3 border-dashed p-2 border-[#494949] mx-4 md:hidden" />
+
+//             {/* Tablet & Desktop Layout */}
+//             <div className="hidden md:block">
+//               <div className="flex flex-col lg:flex-row gap-8 p-6 lg:p-8">
+//                 {/* Event Flyer */}
+//                 {eventData.eventFlyer && (
+//                   <div className="w-full lg:w-2/5 xl:w-1/3">
+//                     <div
+//                       className="relative aspect-[4/3] lg:aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer group shadow-2xl shadow-amber-500/10"
+//                       onClick={() => setShowFlyer(true)}
+//                     >
+//                       <Image
+//                         src={eventData.eventFlyer}
+//                         alt={eventData.title}
+//                         fill
+//                         className="object-cover group-hover:scale-105 transition-transform duration-300"
+//                       />
+//                       <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/60 via-transparent to-transparent"></div>
+//                       <div className="absolute top-4 right-4 bg-zinc-900/70 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+//                         <Upload className="w-4 h-4 text-amber-400" />
+//                       </div>
+//                     </div>
+//                   </div>
+//                 )}
+
+//                 {/* Event Details */}
+//                 <div className="flex-1 space-y-6 mb-20">
+//                   {/* Back Button */}
+//                   <div className="flex justify-between items-center">
+//                     <button
+//                       onClick={() => router.push("/")}
+//                       className="text-zinc-400 hover:text-zinc-200 bg-zinc-800/50 backdrop-blur-sm rounded-xl p-3 transition-all duration-200 hover:bg-zinc-700/50 group"
+//                     >
+//                       <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-200" />
+//                     </button>
+
+//                     {/* Status Badge */}
+//                     <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500/20 to-amber-600/20 rounded-full border border-amber-500/30">
+//                       <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+//                       <span className="text-amber-300 text-sm font-medium">
+//                         Active Event
+//                       </span>
+//                     </div>
+//                   </div>
+
+//                   {/* Event Info */}
+//                   <div className="space-y-4">
+//                     <div>
+//                       <p className="text-amber-400 font-semibold text-sm mb-2">
+//                         ENDING: {formatDate(eventData.eventDate)}
+//                       </p>
+//                       <h1 className="font-bold text-3xl lg:text-4xl text-zinc-50 leading-tight">
+//                         {eventData.title}
+//                       </h1>
+//                     </div>
+
+//                     {/* Event Meta */}
+//                     <div className="flex flex-wrap items-center gap-6 text-sm">
+//                       <div className="flex items-center gap-3">
+//                         <div className="w-10 h-10 bg-zinc-800/50 rounded-xl flex items-center justify-center">
+//                           <Calendar className="w-5 h-5 text-amber-400" />
+//                         </div>
+//                         <div>
+//                           <p className="text-zinc-300 font-medium">
+//                             {formatDate(eventData.eventDate)}
+//                           </p>
+//                           <p className="text-zinc-500 text-xs">Event Date</p>
+//                         </div>
+//                       </div>
+
+//                       <div className="flex items-center gap-3">
+//                         <div className="w-10 h-10 bg-zinc-800/50 rounded-xl flex items-center justify-center">
+//                           <User className="w-5 h-5 text-amber-400" />
+//                         </div>
+//                         <div>
+//                           <p className="text-zinc-300 font-medium">
+//                             {eventData.creator.fullname}
+//                           </p>
+//                           <p className="text-zinc-500 text-xs">Event Host</p>
+//                         </div>
+//                       </div>
+
+//                       <div className="flex items-center gap-3">
+//                         <div className="w-10 h-10 bg-zinc-800/50 rounded-xl flex items-center justify-center">
+//                           <Camera className="w-5 h-5 text-amber-400" />
+//                         </div>
+//                         <div>
+//                           <p className="text-zinc-300 font-medium">
+//                             {eventData.photoCapLimit} photos
+//                           </p>
+//                           <p className="text-zinc-500 text-xs">Per Person</p>
+//                         </div>
+//                       </div>
+//                     </div>
+
+//                     {/* Stats */}
+//                     <div className="flex items-center gap-6 text-zinc-300">
+//                       <div className="text-center">
+//                         <p className="text-2xl font-bold text-zinc-50">
+//                           {mediaData?.participantStats?.totalPhotos || 0}
+//                         </p>
+//                         <p className="text-xs text-zinc-400">Photos</p>
+//                       </div>
+//                       <div className="w-px h-8 bg-zinc-700"></div>
+//                       <div className="text-center">
+//                         <p className="text-2xl font-bold text-zinc-50">
+//                           {mediaData?.participantStats?.totalVideos || 0}
+//                         </p>
+//                         <p className="text-xs text-zinc-400">Videos</p>
+//                       </div>
+//                       <div className="w-px h-8 bg-zinc-700"></div>
+//                       <div className="text-center">
+//                         <p className="text-2xl font-bold text-zinc-50">
+//                           {mediaData?.participantStats?.totalParticipants || 0}
+//                         </p>
+//                         <p className="text-xs text-zinc-400">Participants</p>
+//                       </div>
+//                     </div>
+
+//                     {/* Description */}
+//                     {eventData.description && (
+//                       <div className="p-6 bg-zinc-800/30 rounded-2xl border border-zinc-700/30">
+//                         <p className="text-zinc-300 leading-relaxed">
+//                           {eventData.description}
+//                         </p>
+//                       </div>
+//                     )}
+//                   </div>
+
+//                   {/* Action Buttons */}
+//                   <div className="flex flex-wrap gap-4">
+//                     <button
+//                       className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 px-6 py-3 rounded-xl text-zinc-900 font-semibold shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+//                       onClick={handleUploadClick}
+//                     >
+//                       <Plus className="w-5 h-5" />
+//                       <span>Upload Photos</span>
+//                     </button>
+
+//                     <button
+//                       className="flex items-center gap-2 bg-zinc-800/50 hover:bg-zinc-700/50 backdrop-blur-sm px-6 py-3 rounded-xl text-zinc-200 font-medium border border-zinc-700/50 transition-all duration-200 hover:border-zinc-600/50"
+//                       onClick={() =>
+//                         downloadMultipleMedia(mediaData?.media || [])
+//                       }
+//                     >
+//                       <Download className="w-5 h-5 text-amber-400" />
+//                       <span>Export All</span>
+//                     </button>
+
+//                     <button className="flex items-center gap-2 bg-zinc-800/50 hover:bg-zinc-700/50 backdrop-blur-sm px-6 py-3 rounded-xl text-zinc-200 font-medium border border-zinc-700/50 transition-all duration-200 hover:border-zinc-600/50">
+//                       <Images className="w-5 h-5 text-amber-400" />
+//                       <span>Create Photobook</span>
+//                     </button>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+//           </div>
+
+//           {/* Media Gallery Section */}
+//           <div className="px-4 md:px-6 lg:px-8 pb-24">
+//             {/* Gallery Header */}
+//             <div className="flex justify-between items-center mb-6">
+//               <div>
+//                 <h2 className="text-xl font-bold text-zinc-50">
+//                   Event Gallery
+//                 </h2>
+//                 <p className="text-zinc-400 text-sm">
+//                   {mediaLoading
+//                     ? "Loading..."
+//                     : `${
+//                         mediaData?.participantStats?.totalPhotos || 0
+//                       } photos, ${
+//                         mediaData?.participantStats?.totalVideos || 0
+//                       } videos`}
+//                 </p>
+//               </div>
+
+//               {/* View Toggle */}
+//               <div className="flex items-center gap-2 bg-zinc-800/50 rounded-lg p-1">
+//                 <button
+//                   onClick={() => setViewMode("grid")}
+//                   className={`p-2 rounded-md transition-all duration-200 ${
+//                     viewMode === "grid"
+//                       ? "bg-amber-500 text-zinc-900"
+//                       : "text-zinc-400 hover:text-zinc-200"
+//                   }`}
+//                 >
+//                   <Grid3X3 className="w-4 h-4" />
+//                 </button>
+//                 <button
+//                   onClick={() => setViewMode("list")}
+//                   className={`p-2 rounded-md transition-all duration-200 ${
+//                     viewMode === "list"
+//                       ? "bg-amber-500 text-zinc-900"
+//                       : "text-zinc-400 hover:text-zinc-200"
+//                   }`}
+//                 >
+//                   <List className="w-4 h-4" />
+//                 </button>
+//               </div>
+//             </div>
+
+//             {/* Loading State */}
+//             {mediaLoading && (
+//               <div className="flex items-center justify-center py-12">
+//                 <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+//                 <span className="ml-3 text-zinc-300">Loading media...</span>
+//               </div>
+//             )}
+
+//             {/* Empty State */}
+//             {!mediaLoading &&
+//               (!mediaData?.media || mediaData.media.length === 0) && (
+//                 <div className="text-center py-16">
+//                   <div className="w-20 h-20 mx-auto mb-6 bg-zinc-800/50 rounded-2xl flex items-center justify-center">
+//                     <Camera className="w-10 h-10 text-zinc-600" />
+//                   </div>
+//                   <h3 className="text-xl font-semibold text-zinc-300 mb-2">
+//                     No media yet
+//                   </h3>
+//                   <p className="text-zinc-500 mb-6 max-w-md mx-auto">
+//                     Be the first to share memories from this event. Upload your
+//                     photos and videos to get started!
+//                   </p>
+//                   <button
+//                     onClick={handleUploadClick}
+//                     className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 px-6 py-3 rounded-xl text-zinc-900 font-semibold transition-all duration-200 transform hover:scale-105"
+//                   >
+//                     Upload First Media
+//                   </button>
+//                 </div>
+//               )}
+
+//             {/* Grid View */}
+//             {!mediaLoading &&
+//               mediaData?.media &&
+//               mediaData.media.length > 0 &&
+//               viewMode === "grid" && (
+//                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+//                   {mediaData.media.map((media) => (
+//                     <div
+//                       key={media.id}
+//                       className={`group relative aspect-square bg-zinc-800/30 rounded-xl overflow-hidden border transition-all duration-200 cursor-pointer ${
+//                         isMediaSelected(media.id)
+//                           ? "border-amber-500/50 ring-2 ring-amber-500/30"
+//                           : "border-zinc-700/30 hover:border-amber-500/30"
+//                       }`}
+//                       onClick={() => toggleMediaSelection(media)}
+//                     >
+//                       {/* Selection indicator */}
+//                       {isMediaSelected(media.id) && (
+//                         <div className="absolute top-3 left-3 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center z-10">
+//                           <Check className="w-4 h-4 text-zinc-900" />
+//                         </div>
+//                       )}
+
+//                       {/* Media Content */}
+//                       {isVideo(media.mimeType) ? (
+//                         <div className="relative w-full h-full">
+//                           <video
+//                             src={media.mediaUrl}
+//                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+//                             preload="metadata"
+//                           />
+//                           {/* Video play button overlay */}
+//                           <div className="absolute inset-0 flex items-center justify-center">
+//                             <div className="w-12 h-12 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
+//                               <Play className="w-6 h-6 text-white ml-1" />
+//                             </div>
+//                           </div>
+//                           {/* Video indicator */}
+//                           <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm rounded-full p-1">
+//                             <Video className="w-4 h-4 text-white" />
+//                           </div>
+//                         </div>
+//                       ) : (
+//                         <Image
+//                           src={media.mediaUrl}
+//                           alt={media.fileName}
+//                           fill
+//                           className="object-cover group-hover:scale-105 transition-transform duration-300"
+//                         />
+//                       )}
+
+//                       {/* Overlay */}
+//                       <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+//                         <div className="absolute bottom-3 left-3 right-3">
+//                           <p className="text-white text-sm font-medium truncate mb-1">
+//                             {media.fileName}
+//                           </p>
+//                           <div className="flex justify-between items-center text-xs text-zinc-300">
+//                             <span>{media.uploader.fullname}</span>
+//                             <span>{formatFileSize(media.fileSize)}</span>
+//                           </div>
+//                         </div>
+//                       </div>
+
+//                       {/* Actions menu button */}
+//                       <div className="absolute top-3 right-3">
+//                         <button
+//                           onClick={(e) => toggleMenu(media.id, e)}
+//                           className="bg-zinc-900/70 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-zinc-800/90"
+//                         >
+//                           <MoreVertical className="w-4 h-4 text-white" />
+//                         </button>
+
+//                         {/* Actions Menu */}
+//                         <MediaActionsMenu
+//                           media={media}
+//                           isOpen={activeMenuId === media.id}
+//                           onClose={closeMenu}
+//                           onDownload={() => {
+//                             downloadSingleMedia(media);
+//                             closeMenu();
+//                           }}
+//                           onShare={() => {
+//                             handleShare([media]);
+//                             closeMenu();
+//                           }}
+//                           onPreview={() => {
+//                             handlePreview(media);
+//                             closeMenu();
+//                           }}
+//                         />
+//                       </div>
+//                     </div>
+//                   ))}
+//                 </div>
+//               )}
+
+//             {/* List View */}
+//             {!mediaLoading &&
+//               mediaData?.media &&
+//               mediaData.media.length > 0 &&
+//               viewMode === "list" && (
+//                 <div className="space-y-3">
+//                   {mediaData.media.map((media) => (
+//                     <div
+//                       key={media.id}
+//                       className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+//                         isMediaSelected(media.id)
+//                           ? "bg-zinc-800/50 border-amber-500/50"
+//                           : "bg-zinc-800/30 border-zinc-700/30 hover:border-amber-500/30"
+//                       }`}
+//                       onClick={() => toggleMediaSelection(media)}
+//                     >
+//                       {/* Selection checkbox */}
+//                       <div
+//                         className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+//                           isMediaSelected(media.id)
+//                             ? "bg-amber-500 border-amber-500"
+//                             : "border-zinc-600 hover:border-amber-500"
+//                         }`}
+//                       >
+//                         {isMediaSelected(media.id) && (
+//                           <Check className="w-3 h-3 text-zinc-900" />
+//                         )}
+//                       </div>
+
+//                       {/* Thumbnail */}
+//                       <div className="relative w-16 h-16 bg-zinc-700/50 rounded-lg overflow-hidden flex-shrink-0">
+//                         {isVideo(media.mimeType) ? (
+//                           <div className="relative w-full h-full">
+//                             <video
+//                               src={media.mediaUrl}
+//                               className="w-full h-full object-cover"
+//                               preload="metadata"
+//                             />
+//                             <div className="absolute inset-0 flex items-center justify-center">
+//                               <div className="w-6 h-6 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
+//                                 <Play className="w-3 h-3 text-white ml-0.5" />
+//                               </div>
+//                             </div>
+//                           </div>
+//                         ) : (
+//                           <Image
+//                             src={media.mediaUrl}
+//                             alt={media.fileName}
+//                             fill
+//                             className="object-cover"
+//                           />
+//                         )}
+//                       </div>
+
+//                       {/* Media Info */}
+//                       <div className="flex-1 min-w-0">
+//                         <div className="flex items-center gap-2 mb-1">
+//                           <h4 className="font-medium text-zinc-200 truncate">
+//                             {media.fileName}
+//                           </h4>
+//                           {isVideo(media.mimeType) && (
+//                             <div className="bg-zinc-700 rounded-full p-1">
+//                               <Video className="w-3 h-3 text-zinc-400" />
+//                             </div>
+//                           )}
+//                         </div>
+//                         <div className="flex items-center gap-4 text-sm text-zinc-400">
+//                           <span>{media.uploader.fullname}</span>
+//                           <span>{formatFileSize(media.fileSize)}</span>
+//                           <span>
+//                             {new Date(media.createdAt).toLocaleDateString()}
+//                           </span>
+//                         </div>
+//                       </div>
+
+//                       {/* Actions */}
+//                       <div className="flex items-center gap-2 flex-shrink-0">
+//                         <button
+//                           onClick={(e) => {
+//                             e.stopPropagation();
+//                             downloadSingleMedia(media);
+//                           }}
+//                           className="p-2 text-zinc-400 hover:text-amber-400 hover:bg-zinc-700/50 rounded-lg transition-all duration-200"
+//                         >
+//                           <Download className="w-4 h-4" />
+//                         </button>
+//                         <button
+//                           onClick={(e) => {
+//                             e.stopPropagation();
+//                             handleShare([media]);
+//                           }}
+//                           className="p-2 text-zinc-400 hover:text-amber-400 hover:bg-zinc-700/50 rounded-lg transition-all duration-200"
+//                         >
+//                           <Share2 className="w-4 h-4" />
+//                         </button>
+//                       </div>
+//                     </div>
+//                   ))}
+//                 </div>
+//               )}
+
+//             {/* Load More Button */}
+//             {mediaData?.pagination && mediaData.pagination.totalPages > 1 && (
+//               <div className="text-center mt-8">
+//                 <button className="bg-zinc-800/50 hover:bg-zinc-700/50 backdrop-blur-sm px-6 py-3 rounded-xl text-zinc-200 font-medium border border-zinc-700/50 transition-all duration-200 hover:border-zinc-600/50">
+//                   Load More Media
+//                   <span className="ml-2 text-zinc-400">
+//                     ({mediaData.pagination.page} of{" "}
+//                     {mediaData.pagination.totalPages})
+//                   </span>
+//                 </button>
+//               </div>
+//             )}
+//           </div>
+
+//           {/* Selection Actions */}
+//           <SelectionActions
+//             selectedMedia={selectedMedia}
+//             onDownload={() => downloadMultipleMedia(selectedMedia)}
+//             onShare={() => handleShare(selectedMedia)}
+//             onClearSelection={clearSelection}
+//           />
+
+//           {/* Share Modal */}
+//           <ShareModal
+//             isOpen={showShareModal}
+//             onClose={() => setShowShareModal(false)}
+//             media={shareMedia}
+//           />
+
+//           {/* Preview Modal */}
+//           <PreviewModal
+//             isOpen={showPreviewModal}
+//             onClose={() => setShowPreviewModal(false)}
+//             media={previewMedia}
+//             allMedia={mediaData?.media || []}
+//           />
+
+//           <UploadModal
+//             isOpen={showUploadModal}
+//             onClose={() => setShowUploadModal(false)}
+//             eventData={{
+//               ...eventData,
+//               photoCapLimit: Number(eventData.photoCapLimit),
+//             }}
+//             onAddShots={navigateToEvent}
+//           />
+
+//           {/* Add the BottomNav component */}
+//           <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return null;
+// }
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +1628,15 @@ import {
   User,
   Calendar,
   Upload,
+  Grid3X3,
+  List,
+  MoreVertical,
+  Share2,
+  Check,
+  Play,
+  Video,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -31,6 +1644,23 @@ import { api } from "@/api/axios";
 import EventFlyer from "../components/EventFlyer";
 import { UploadModal } from "../components/UploadModal";
 import { BottomNav } from "../components/BottomNav";
+import { EventMediaResponse } from "@/types/media";
+import { SelectionActions } from "../components/SelectedAction";
+import { MediaActionsMenu } from "../components/MediaActionMenu";
+
+// Add this interface for the my-uploads response
+interface MyUploadsResponse {
+  success: boolean;
+  message: string;
+  uploads: MediaItem[];
+  stats: {
+    totalUploads: number;
+    remainingUploads: number;
+    photoCapLimit: number;
+    imagesCount: number;
+    videosCount: number;
+  };
+}
 
 // Types
 interface EventData {
@@ -50,6 +1680,52 @@ interface EventData {
   };
 }
 
+interface MediaItem {
+  id: string;
+  eventId: string;
+  uploadedBy: string;
+  mediaType: string;
+  mediaUrl: string;
+  fileName: string;
+  fileSize: string;
+  mimeType: string;
+  cloudinaryPublicId: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  uploader: {
+    id: string;
+    fullname: string;
+  };
+}
+
+interface MediaResponse {
+  success: boolean;
+  message: string;
+  media: MediaItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  eventInfo: {
+    id: string;
+    title: string;
+    photoCapLimit: string;
+  };
+  participantStats: {
+    totalParticipants: number;
+    totalMedia: number;
+    totalPhotos: number;
+    totalVideos: number;
+    mediaBreakdown: {
+      image: number;
+      video: number;
+    };
+  };
+}
+
 interface ApiResponse<T = any> {
   success: boolean;
   message: string;
@@ -64,20 +1740,305 @@ class ApiError extends Error {
   }
 }
 
-// EventFlyer Component
-interface EventFlyerProps {
-  flyer: string;
-  title: string;
-  date: string;
-  onTakePhotos: () => void;
+// Utility functions
+const isVideo = (mimeType: string) => {
+  return mimeType.startsWith("video/");
+};
+
+const isImage = (mimeType: string) => {
+  return mimeType.startsWith("image/");
+};
+
+// Preview Modal Component
+const PreviewModal = ({
+  isOpen,
+  onClose,
+  media,
+  allMedia,
+}: {
+  isOpen: boolean;
   onClose: () => void;
-}
+  media: MediaItem | null;
+  allMedia: MediaItem[];
+}) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (media && allMedia.length > 0) {
+      const index = allMedia.findIndex((m) => m.id === media.id);
+      if (index !== -1) {
+        setCurrentIndex(index);
+      }
+    }
+  }, [media, allMedia]);
+
+  const goToPrevious = () => {
+    setCurrentIndex((prev) => (prev === 0 ? allMedia.length - 1 : prev - 1));
+  };
+
+  const goToNext = () => {
+    setCurrentIndex((prev) => (prev === allMedia.length - 1 ? 0 : prev + 1));
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") goToPrevious();
+      if (e.key === "ArrowRight") goToNext();
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, onClose, goToPrevious, goToNext]);
+
+  if (!isOpen || !media || allMedia.length === 0) return null;
+
+  const currentMedia = allMedia[currentIndex];
+  const isVideoFile = isVideo(currentMedia.mimeType);
+
+  return (
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-50 p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
+      >
+        <X className="w-6 h-6 text-white" />
+      </button>
+
+      <button
+        onClick={goToPrevious}
+        className="absolute left-4 z-50 p-3 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
+      >
+        <ChevronLeft className="w-6 h-6 text-white" />
+      </button>
+
+      <button
+        onClick={goToNext}
+        className="absolute right-4 z-50 p-3 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
+      >
+        <ChevronRight className="w-6 h-6 text-white" />
+      </button>
+
+      <div className="relative w-full h-full max-w-5xl max-h-[90vh] flex items-center justify-center">
+        {isVideoFile ? (
+          <video
+            src={currentMedia.mediaUrl}
+            className="max-w-full max-h-full object-contain"
+            controls
+            autoPlay
+          />
+        ) : (
+          <Image
+            src={currentMedia.mediaUrl}
+            alt={currentMedia.fileName}
+            fill
+            className="object-contain"
+          />
+        )}
+      </div>
+
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-4 py-2 rounded-lg">
+        {currentIndex + 1} / {allMedia.length}
+      </div>
+    </div>
+  );
+};
+
+// Media Actions Menu Component
+
+const ShareModal = ({
+  isOpen,
+  onClose,
+  media,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  media: MediaItem[];
+}) => {
+  if (!isOpen) return null;
+
+  const isVideo = (mimeType: string) => mimeType.startsWith("video/");
+
+  const shareMediaFiles = async (platform: string) => {
+    try {
+      if (media.length === 1) {
+        const mediaItem = media[0];
+
+        const response = await fetch(mediaItem.mediaUrl);
+        const blob = await response.blob();
+        const file = new File([blob], mediaItem.fileName, {
+          type: mediaItem.mimeType,
+        });
+
+        const shareData: ShareData = {
+          files: [file],
+          title: mediaItem.fileName,
+          text: `Check out this ${
+            isVideo(mediaItem.mimeType) ? "video" : "photo"
+          } from the event!`,
+        };
+
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+        } else {
+          const text = `Check out this ${
+            isVideo(mediaItem.mimeType) ? "video" : "photo"
+          } from the event!\n${mediaItem.mediaUrl}`;
+
+          if (platform === "whatsapp") {
+            window.open(
+              `https://wa.me/?text=${encodeURIComponent(text)}`,
+              "_blank"
+            );
+          } else if (platform === "twitter") {
+            window.open(
+              `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                text
+              )}`,
+              "_blank"
+            );
+          } else if (platform === "facebook") {
+            window.open(
+              `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+                mediaItem.mediaUrl
+              )}`,
+              "_blank"
+            );
+          }
+        }
+      } else {
+        const text = `Check out these ${media.length} ${
+          media[0].mimeType.startsWith("video/") ? "videos" : "photos"
+        } from the event!`;
+        const urls = media.map((m) => m.mediaUrl).join("\n");
+
+        if (platform === "whatsapp") {
+          window.open(
+            `https://wa.me/?text=${encodeURIComponent(text + "\n" + urls)}`,
+            "_blank"
+          );
+        } else if (platform === "twitter") {
+          window.open(
+            `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+              text
+            )}&url=${encodeURIComponent(urls)}`,
+            "_blank"
+          );
+        } else if (platform === "facebook") {
+          window.open(
+            `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+              urls
+            )}`,
+            "_blank"
+          );
+        }
+      }
+
+      toast.success("Shared successfully!");
+      onClose();
+    } catch (error) {
+      console.error("Error sharing:", error);
+      toast.error("Failed to share. Please try again.");
+    }
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      const urls = media.map((m) => m.mediaUrl).join("\n");
+      await navigator.clipboard.writeText(urls);
+      toast.success("Links copied to clipboard!");
+      onClose();
+    } catch (err) {
+      toast.error("Failed to copy links");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-4">
+      <div className="bg-zinc-900 rounded-t-3xl md:rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold text-zinc-50">
+              Share {media.length > 1 ? `${media.length} items` : "item"}
+            </h3>
+            <button
+              onClick={onClose}
+              className="p-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => shareMediaFiles("whatsapp")}
+              className="w-full flex items-center gap-4 p-4 bg-green-600/10 hover:bg-green-600/20 border border-green-600/20 rounded-xl transition-colors"
+            >
+              <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
+                <Share2 className="w-5 h-5 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-medium text-zinc-200">WhatsApp</p>
+                <p className="text-sm text-zinc-400">Share to WhatsApp</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => shareMediaFiles("twitter")}
+              className="w-full flex items-center gap-4 p-4 bg-blue-600/10 hover:bg-blue-600/20 border border-blue-600/20 rounded-xl transition-colors"
+            >
+              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                <Share2 className="w-5 h-5 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-medium text-zinc-200">Twitter</p>
+                <p className="text-sm text-zinc-400">Share to Twitter</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => shareMediaFiles("facebook")}
+              className="w-full flex items-center gap-4 p-4 bg-blue-800/10 hover:bg-blue-800/20 border border-blue-800/20 rounded-xl transition-colors"
+            >
+              <div className="w-10 h-10 bg-blue-800 rounded-full flex items-center justify-center">
+                <Share2 className="w-5 h-5 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-medium text-zinc-200">Facebook</p>
+                <p className="text-sm text-zinc-400">Share to Facebook</p>
+              </div>
+            </button>
+
+            <button
+              onClick={copyToClipboard}
+              className="w-full flex items-center gap-4 p-4 bg-zinc-700/20 hover:bg-zinc-700/40 border border-zinc-700/30 rounded-xl transition-colors"
+            >
+              <div className="w-10 h-10 bg-zinc-600 rounded-full flex items-center justify-center">
+                <Download className="w-5 h-5 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-medium text-zinc-200">Copy Links</p>
+                <p className="text-sm text-zinc-400">Copy to clipboard</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function EventSlugPage() {
   const router = useRouter();
   const params = useParams();
 
-  // Extract the slug from the URL path
   const slug =
     typeof window !== "undefined"
       ? window.location.pathname.split("/").pop()
@@ -86,16 +2047,36 @@ export default function EventSlugPage() {
   console.log("Extracted slug from URL:", slug);
 
   const [eventData, setEventData] = useState<EventData | null>(null);
+  const [mediaData, setMediaData] = useState<EventMediaResponse | null>(null);
+  const [myUploadsData, setMyUploadsData] = useState<MyUploadsResponse | null>(
+    null
+  );
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [mediaLoading, setMediaLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [needsPassword, setNeedsPassword] = useState(false);
   const [error, setError] = useState("");
-  const [showFlyer, setShowFlyer] = useState(true); // New state to control flyer visibility
+  const [showFlyer, setShowFlyer] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [activeTab, setActiveTab] = useState("all"); // Add state for active tab
-  // Single function to handle event access
+  const [activeFilter, setActiveFilter] = useState<"all" | "my">("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  // Selection and sharing states
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareMedia, setShareMedia] = useState<MediaItem[]>([]);
+  const [previewMedia, setPreviewMedia] = useState<MediaItem | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+
+  const handlePreview = (media: MediaItem) => {
+    setPreviewMedia(media);
+    setShowPreviewModal(true);
+    setActiveMenuId(null);
+  };
+
   const getEventAccess = async (
     slug: string,
     password?: string
@@ -144,6 +2125,144 @@ export default function EventSlugPage() {
         message: error.response?.data?.message || "Failed to access event",
       };
     }
+  };
+
+  // Function to fetch event media
+  const fetchEventMedia = async (eventId: string) => {
+    try {
+      setMediaLoading(true);
+      console.log(`Fetching media for event: ${eventId}`);
+
+      const response = await api.get(`/media/event/${slug}`);
+      console.log("Media response:", response.data);
+
+      if (response.data.success) {
+        setMediaData(response.data);
+      } else {
+        console.warn("Failed to fetch media:", response.data.message);
+      }
+    } catch (error: any) {
+      console.error("Error fetching media:", error);
+    } finally {
+      setMediaLoading(false);
+    }
+  };
+
+  // Function to fetch user uploads
+  const fetchMyUploads = async (eventId: string) => {
+    try {
+      setMediaLoading(true);
+      console.log(`Fetching my uploads for event: ${eventId}`);
+
+      const response = await api.get(`/media/event/${eventId}/my-uploads`);
+      console.log("My uploads response:", response.data);
+
+      if (response.data.success) {
+        setMyUploadsData(response.data);
+      } else {
+        console.warn("Failed to fetch my uploads:", response.data.message);
+        toast.error("Failed to fetch your uploads");
+      }
+    } catch (error: any) {
+      console.error("Error fetching my uploads:", error);
+      toast.error("Failed to fetch your uploads");
+    } finally {
+      setMediaLoading(false);
+    }
+  };
+
+  const downloadSingleMedia = async (media: MediaItem) => {
+    try {
+      toast.loading("Preparing download...");
+
+      const response = await fetch(media.mediaUrl);
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = media.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.dismiss();
+      toast.success("Download started!");
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Failed to download file");
+    }
+  };
+
+  const downloadMultipleMedia = async (mediaItems: MediaItem[]) => {
+    try {
+      toast.loading(`Preparing ${mediaItems.length} downloads...`);
+
+      for (let i = 0; i < mediaItems.length; i++) {
+        const media = mediaItems[i];
+
+        setTimeout(async () => {
+          try {
+            const response = await fetch(media.mediaUrl);
+            const blob = await response.blob();
+
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = media.fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+          } catch (error) {
+            console.error(`Failed to download ${media.fileName}:`, error);
+          }
+        }, i * 500);
+      }
+
+      setTimeout(() => {
+        toast.dismiss();
+        toast.success(`Started ${mediaItems.length} downloads!`);
+      }, 1000);
+    } catch (error) {
+      toast.dismiss();
+      toast.error("Failed to start downloads");
+    }
+  };
+
+  const toggleMediaSelection = (media: MediaItem) => {
+    setSelectedMedia((prev) => {
+      const isSelected = prev.some((item) => item.id === media.id);
+      if (isSelected) {
+        return prev.filter((item) => item.id !== media.id);
+      } else {
+        return [...prev, media];
+      }
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedMedia([]);
+  };
+
+  const isMediaSelected = (mediaId: string) => {
+    return selectedMedia.some((item) => item.id === mediaId);
+  };
+
+  const handleShare = (media: MediaItem[]) => {
+    setShareMedia(media);
+    setShowShareModal(true);
+    setActiveMenuId(null);
+  };
+
+  const toggleMenu = (mediaId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setActiveMenuId(activeMenuId === mediaId ? null : mediaId);
+  };
+
+  const closeMenu = () => {
+    setActiveMenuId(null);
   };
 
   const processEventAccess = async (
@@ -199,6 +2318,17 @@ export default function EventSlugPage() {
     setShowUploadModal(true);
   };
 
+  const handleMediaUpload = () => {
+    if (eventData) {
+      // Refresh the appropriate data based on current filter
+      if (activeFilter === "all") {
+        fetchEventMedia(eventData.id);
+      } else {
+        fetchMyUploads(eventData.id);
+      }
+    }
+  };
+
   useEffect(() => {
     if (slug) {
       console.log("useEffect triggered with slug:", slug);
@@ -209,6 +2339,17 @@ export default function EventSlugPage() {
       setLoading(false);
     }
   }, [slug]);
+
+  // Fetch media when event data is loaded or filter changes
+  useEffect(() => {
+    if (eventData && !needsPassword) {
+      if (activeFilter === "all") {
+        fetchEventMedia(eventData.id);
+      } else {
+        fetchMyUploads(eventData.id);
+      }
+    }
+  }, [eventData, needsPassword, activeFilter]);
 
   const checkEventAccess = async () => {
     try {
@@ -268,19 +2409,29 @@ export default function EventSlugPage() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
 
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // 01–12
-    const day = String(date.getDate()).padStart(2, "0"); // 01–31
-    const year = String(date.getFullYear()).slice(-2); // last 2 digits
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const year = String(date.getFullYear()).slice(-2);
 
     return `${month}.${day}.${year}`;
   };
 
-  const navigateToCamera = () => {
-    router.push(`/event/${slug}/camera`);
+  const formatFileSize = (bytes: string) => {
+    const size = parseInt(bytes);
+    const units = ["B", "KB", "MB", "GB"];
+    let unitIndex = 0;
+    let fileSize = size;
+
+    while (fileSize >= 1024 && unitIndex < units.length - 1) {
+      fileSize /= 1024;
+      unitIndex++;
+    }
+
+    return `${fileSize.toFixed(1)} ${units[unitIndex]}`;
   };
 
-  const navigateToGallery = () => {
-    router.push(`/event/${slug}/gallery`);
+  const navigateToEvent = () => {
+    router.push(`/event/${slug}`);
   };
 
   const handleTakePhotos = () => {
@@ -290,6 +2441,28 @@ export default function EventSlugPage() {
   const handleCloseFlyerOrCancel = () => {
     setShowFlyer(false);
   };
+
+  // Determine which media to display based on active filter
+  const displayMedia =
+    activeFilter === "my" && myUploadsData
+      ? myUploadsData.uploads
+      : mediaData?.media || [];
+
+  // Determine which stats to display based on active filter
+  const displayStats =
+    activeFilter === "my" && myUploadsData
+      ? {
+          totalPhotos: myUploadsData.stats.imagesCount,
+          totalVideos: myUploadsData.stats.videosCount,
+          totalParticipants: 1, // Just the current user
+          totalMedia: myUploadsData.stats.totalUploads,
+        }
+      : mediaData?.participantStats || {
+          totalPhotos: 0,
+          totalVideos: 0,
+          totalParticipants: 0,
+          totalMedia: 0,
+        };
 
   if (loading) {
     return (
@@ -331,7 +2504,6 @@ export default function EventSlugPage() {
     );
   }
 
-  // Show password form if needed
   if (needsPassword) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100/50 flex items-center justify-center p-4">
@@ -412,7 +2584,6 @@ export default function EventSlugPage() {
     );
   }
 
-  // Show event flyer first if event data exists and showFlyer is true
   if (eventData && showFlyer && eventData.eventFlyer) {
     return (
       <EventFlyer
@@ -425,109 +2596,14 @@ export default function EventSlugPage() {
     );
   }
 
-  // Show event details (card content) if access granted and flyer is dismissed
-  // if (eventData) {
-  //   return (
-  //     <div className="min-h-screen bg-primary">
-  //       <div className="max-w-4xl mx-auto">
-  //         {/* Event Header */}
-  //         <div className="">
-  //           <div className="">
-  //             <div className="flex flex-col md:flex-row gap-6">
-  //               {/* Event Flyer Thumbnail */}
-  //               {eventData.eventFlyer && (
-  //                 <div className="w-full md:w-1/3">
-  //                   <div
-  //                     className="relative aspect-[7/4]  overflow-hidden cursor-pointer"
-  //                     onClick={() => setShowFlyer(true)}
-  //                   >
-  //                     <Image
-  //                       src={eventData.eventFlyer}
-  //                       alt={eventData.title}
-  //                       fill
-  //                       className="object-cover hover:opacity-80 transition-opacity"
-  //                     />
-  //                     <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-primary to-transparent"></div>
-  //                   </div>
-  //                 </div>
-  //               )}
-
-  //               {/* Event Details */}
-  //               <div className="absolute px-3">
-  //                 {/* Back Button */}
-  //                 <div className="mt-5">
-  //                   <button
-  //                     onClick={() => router.push("/")}
-  //                     className="text-white hover:bg-white/10 bg-[#f0eded]/30 rounded-full p-2"
-  //                   >
-  //                     <ArrowLeft className="w-4 h-4 " />
-  //                   </button>
-  //                 </div>
-  //                 <div className="mt-14 space-y-3">
-  //                   <p className="text-[#dadada] font-semibold text-xs">
-  //                     ENDING: {formatDate(eventData.eventDate)}
-  //                   </p>
-  //                   <p className=" font-bold text-lg text-white ">
-  //                     {eventData.title}
-  //                   </p>
-  //                 </div>
-
-  //                 <div className="flex items-center gap-2 text-xs text-[#dadada]  mt-3">
-  //                   <p>0 Photos</p> . <p>2 Participants</p>
-  //                 </div>
-  //                 <div className="flex gap-3 items-center">
-  //                   <button
-  //                     className="flex items-center gap-1 mt-4 bg-[#494949] px-3 py-2 rounded-full"
-  //                     onClick={handleUploadClick}
-  //                   >
-  //                     <Plus className="w-4 h-4 text-[#aaaaaa]" />
-  //                     <span className="text-[#dadada] text-xs font-bold">
-  //                       Upload
-  //                     </span>
-  //                   </button>
-  //                   <button className="flex items-center gap-2 mt-4 bg-[#494949] px-3 py-2 rounded-full ">
-  //                     <Download className="w-4 h-4 text-[#aaaaaa]" />
-  //                     <span className="text-[#dadada] text-xs font-bold">
-  //                       Export
-  //                     </span>
-  //                   </button>
-  //                   <button className="flex items-center gap-2 mt-4 bg-[#494949] px-3 py-2 rounded-full ">
-  //                     <Images className="w-4 h-4 text-[#aaaaaa]" />
-  //                     <span className="text-[#dadada] text-xs font-bold">
-  //                       Photobook
-  //                     </span>
-  //                   </button>
-  //                 </div>
-  //               </div>
-  //             </div>
-  //           </div>
-  //         </div>
-  //         <UploadModal
-  //           isOpen={showUploadModal}
-  //           onClose={() => setShowUploadModal(false)}
-  //           eventData={{
-  //             ...eventData,
-  //             photoCapLimit: Number(eventData.photoCapLimit),
-  //           }}
-  //           onAddShots={navigateToCamera}
-  //         />
-  //         {/* Add the BottomNav component */}
-  //         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
-  // Added with desktop in mind first, will enhance for mobile later
-
   if (eventData) {
     return (
       <div className="min-h-screen bg-primary">
         <div className="max-w-7xl mx-auto">
           {/* Event Header */}
           <div className="relative">
-            {/* Mobile Layout (unchanged) */}
-            <div className="block md:hidden">
+            {/* Mobile Layout */}
+            <div className="block md:hidden pb-5">
               <div className="flex flex-col gap-6">
                 {/* Event Flyer Thumbnail */}
                 {eventData.eventFlyer && (
@@ -559,7 +2635,7 @@ export default function EventSlugPage() {
                     </button>
                   </div>
                   <div className="mt-14 space-y-3">
-                    <p className="text-zinc-300 font-semibold text-xs">
+                    <p className="text-zinc-300 font-bold text-xs">
                       ENDING: {formatDate(eventData.eventDate)}
                     </p>
                     <p className="font-bold text-lg text-white ">
@@ -568,27 +2644,32 @@ export default function EventSlugPage() {
                   </div>
 
                   <div className="flex items-center gap-2 text-xs text-zinc-300 mt-3">
-                    <p>0 Photos</p> . <p>2 Participants</p>
+                    <p>{displayStats.totalPhotos} Photos</p> .
+                    <p>{displayStats.totalVideos} Videos</p> .
+                    <p>{displayStats.totalParticipants} Participants</p>
                   </div>
                   <div className="flex gap-3 items-center">
                     <button
-                      className="flex items-center gap-1 mt-4 bg-[#494949] backdrop-blur-sm px-3 py-2 rounded-full hover:bg-zinc-700/70 transition-all duration-200"
+                      className="flex items-center gap-1 mt-4 bg-[#494949] backdrop-blur-sm px-3 py-2.5 rounded-full hover:bg-zinc-700/70 transition-all duration-200"
                       onClick={handleUploadClick}
                     >
                       <Plus className="w-4 h-4 text-amber-400" />
-                      <span className="text-[#aaaaaa] text-xs font-bold">
+                      <span className="text-white text-xs font-bold">
                         Upload
                       </span>
                     </button>
-                    <button className="flex items-center gap-2 mt-4 bg-[#494949] backdrop-blur-sm px-3 py-2 rounded-full hover:bg-zinc-700/70 transition-all duration-200">
+                    <button
+                      className="flex items-center gap-2 mt-4 bg-[#494949] backdrop-blur-sm px-3 py-2.5 rounded-full hover:bg-zinc-700/70 transition-all duration-200"
+                      onClick={() => downloadMultipleMedia(displayMedia)}
+                    >
                       <Download className="w-4 h-4 text-amber-400" />
-                      <span className="text-[#aaaaaa] text-xs font-bold">
+                      <span className="text-white text-xs font-bold">
                         Export
                       </span>
                     </button>
-                    <button className="flex items-center gap-2 mt-4 bg-[#494949] backdrop-blur-sm px-3 py-2 rounded-full hover:bg-zinc-700/70 transition-all duration-200">
+                    <button className="flex items-center gap-2 mt-4 bg-[#494949] backdrop-blur-sm px-3 py-2.5 rounded-full hover:bg-zinc-700/70 transition-all duration-200">
                       <Images className="w-4 h-4 text-amber-400" />
-                      <span className="text-[#aaaaaa] text-xs font-bold">
+                      <span className="text-white text-xs font-bold">
                         Photobook
                       </span>
                     </button>
@@ -596,9 +2677,10 @@ export default function EventSlugPage() {
                 </div>
               </div>
             </div>
+            <hr className="border-t-3 border-dashed p-2 border-[#494949] mx-4 md:hidden" />
 
             {/* Tablet & Desktop Layout */}
-            <div className="hidden md:block ">
+            <div className="hidden md:block">
               <div className="flex flex-col lg:flex-row gap-8 p-6 lg:p-8">
                 {/* Event Flyer */}
                 {eventData.eventFlyer && (
@@ -694,12 +2776,23 @@ export default function EventSlugPage() {
                     {/* Stats */}
                     <div className="flex items-center gap-6 text-zinc-300">
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-zinc-50">0</p>
+                        <p className="text-2xl font-bold text-zinc-50">
+                          {displayStats.totalPhotos}
+                        </p>
                         <p className="text-xs text-zinc-400">Photos</p>
                       </div>
                       <div className="w-px h-8 bg-zinc-700"></div>
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-zinc-50">2</p>
+                        <p className="text-2xl font-bold text-zinc-50">
+                          {displayStats.totalVideos}
+                        </p>
+                        <p className="text-xs text-zinc-400">Videos</p>
+                      </div>
+                      <div className="w-px h-8 bg-zinc-700"></div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-zinc-50">
+                          {displayStats.totalParticipants}
+                        </p>
                         <p className="text-xs text-zinc-400">Participants</p>
                       </div>
                     </div>
@@ -724,7 +2817,10 @@ export default function EventSlugPage() {
                       <span>Upload Photos</span>
                     </button>
 
-                    <button className="flex items-center gap-2 bg-zinc-800/50 hover:bg-zinc-700/50 backdrop-blur-sm px-6 py-3 rounded-xl text-zinc-200 font-medium border border-zinc-700/50 transition-all duration-200 hover:border-zinc-600/50">
+                    <button
+                      className="flex items-center gap-2 bg-zinc-800/50 hover:bg-zinc-700/50 backdrop-blur-sm px-6 py-3 rounded-xl text-zinc-200 font-medium border border-zinc-700/50 transition-all duration-200 hover:border-zinc-600/50"
+                      onClick={() => downloadMultipleMedia(displayMedia)}
+                    >
                       <Download className="w-5 h-5 text-amber-400" />
                       <span>Export All</span>
                     </button>
@@ -739,6 +2835,312 @@ export default function EventSlugPage() {
             </div>
           </div>
 
+          {/* Media Gallery Section */}
+          <div className="px-4 md:px-6 lg:px-8 pb-24">
+            {/* Gallery Header */}
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-zinc-50">
+                  Event Gallery {activeFilter === "my" ? "(My Uploads)" : ""}
+                </h2>
+                <p className="text-zinc-400 text-sm">
+                  {mediaLoading
+                    ? "Loading..."
+                    : `${displayStats.totalPhotos} photos, ${displayStats.totalVideos} videos`}
+                </p>
+              </div>
+
+              {/* View Toggle */}
+              <div className="flex items-center gap-2 bg-zinc-800/50 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-2 rounded-md transition-all duration-200 ${
+                    viewMode === "grid"
+                      ? "bg-amber-500 text-zinc-900"
+                      : "text-zinc-400 hover:text-zinc-200"
+                  }`}
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`p-2 rounded-md transition-all duration-200 ${
+                    viewMode === "list"
+                      ? "bg-amber-500 text-zinc-900"
+                      : "text-zinc-400 hover:text-zinc-200"
+                  }`}
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Loading State */}
+            {mediaLoading && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+                <span className="ml-3 text-zinc-300">Loading media...</span>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!mediaLoading && displayMedia.length === 0 && (
+              <div className="text-center py-16">
+                <div className="w-20 h-20 mx-auto mb-6 bg-zinc-800/50 rounded-2xl flex items-center justify-center">
+                  <Camera className="w-10 h-10 text-zinc-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-zinc-300 mb-2">
+                  {activeFilter === "my" ? "No uploads yet" : "No media yet"}
+                </h3>
+                <p className="text-zinc-500 mb-6 max-w-md mx-auto">
+                  {activeFilter === "my"
+                    ? "You haven't uploaded any media to this event yet. Upload your photos and videos to get started!"
+                    : "Be the first to share memories from this event. Upload your photos and videos to get started!"}
+                </p>
+                <button
+                  onClick={handleUploadClick}
+                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 px-6 py-3 rounded-xl text-zinc-900 font-semibold transition-all duration-200 transform hover:scale-105"
+                >
+                  Upload Media
+                </button>
+              </div>
+            )}
+
+            {/* Grid View */}
+            {!mediaLoading &&
+              displayMedia.length > 0 &&
+              viewMode === "grid" && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {displayMedia.map((media) => (
+                    <div
+                      key={media.id}
+                      className={`group relative aspect-square bg-zinc-800/30 rounded-xl overflow-hidden border transition-all duration-200 cursor-pointer ${
+                        isMediaSelected(media.id)
+                          ? "border-amber-500/50 ring-2 ring-amber-500/30"
+                          : "border-zinc-700/30 hover:border-amber-500/30"
+                      }`}
+                      onClick={() => toggleMediaSelection(media)}
+                    >
+                      {/* Selection indicator */}
+                      {isMediaSelected(media.id) && (
+                        <div className="absolute top-3 left-3 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center z-10">
+                          <Check className="w-4 h-4 text-zinc-900" />
+                        </div>
+                      )}
+
+                      {/* Media Content */}
+                      {isVideo(media.mimeType) ? (
+                        <div className="relative w-full h-full">
+                          <video
+                            src={media.mediaUrl}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            preload="metadata"
+                          />
+                          {/* Video play button overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-12 h-12 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
+                              <Play className="w-6 h-6 text-white ml-1" />
+                            </div>
+                          </div>
+                          {/* Video indicator */}
+                          <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm rounded-full p-1">
+                            <Video className="w-4 h-4 text-white" />
+                          </div>
+                        </div>
+                      ) : (
+                        <Image
+                          src={media.mediaUrl}
+                          alt={media.fileName}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      )}
+
+                      {/* Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <div className="absolute bottom-3 left-3 right-3">
+                          <p className="text-white text-sm font-medium truncate mb-1">
+                            {media.fileName}
+                          </p>
+                          <div className="flex justify-between items-center text-xs text-zinc-300">
+                            {/* <span>{media.uploader.fullname}</span>
+                            <span>{formatFileSize(media.fileSize)}</span> */}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions menu button */}
+                      <div className="absolute top-3 right-3">
+                        <button
+                          onClick={(e) => toggleMenu(media.id, e)}
+                          className="bg-zinc-900/70 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-zinc-800/90"
+                        >
+                          <MoreVertical className="w-4 h-4 text-white" />
+                        </button>
+
+                        {/* Actions Menu */}
+                        <MediaActionsMenu
+                          media={media}
+                          isOpen={activeMenuId === media.id}
+                          onClose={closeMenu}
+                          onDownload={() => {
+                            downloadSingleMedia(media);
+                            closeMenu();
+                          }}
+                          onShare={() => {
+                            handleShare([media]);
+                            closeMenu();
+                          }}
+                          onPreview={() => {
+                            handlePreview(media);
+                            closeMenu();
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+            {/* List View */}
+            {!mediaLoading &&
+              displayMedia.length > 0 &&
+              viewMode === "list" && (
+                <div className="space-y-3">
+                  {displayMedia.map((media) => (
+                    <div
+                      key={media.id}
+                      className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+                        isMediaSelected(media.id)
+                          ? "bg-zinc-800/50 border-amber-500/50"
+                          : "bg-zinc-800/30 border-zinc-700/30 hover:border-amber-500/30"
+                      }`}
+                      onClick={() => toggleMediaSelection(media)}
+                    >
+                      {/* Selection checkbox */}
+                      <div
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                          isMediaSelected(media.id)
+                            ? "bg-amber-500 border-amber-500"
+                            : "border-zinc-600 hover:border-amber-500"
+                        }`}
+                      >
+                        {isMediaSelected(media.id) && (
+                          <Check className="w-3 h-3 text-zinc-900" />
+                        )}
+                      </div>
+
+                      {/* Thumbnail */}
+                      <div className="relative w-16 h-16 bg-zinc-700/50 rounded-lg overflow-hidden flex-shrink-0">
+                        {isVideo(media.mimeType) ? (
+                          <div className="relative w-full h-full">
+                            <video
+                              src={media.mediaUrl}
+                              className="w-full h-full object-cover"
+                              preload="metadata"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-6 h-6 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
+                                <Play className="w-3 h-3 text-white ml-0.5" />
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <Image
+                            src={media.mediaUrl}
+                            alt={media.fileName}
+                            fill
+                            className="object-cover"
+                          />
+                        )}
+                      </div>
+
+                      {/* Media Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-medium text-zinc-200 truncate">
+                            {media.fileName}
+                          </h4>
+                          {isVideo(media.mimeType) && (
+                            <div className="bg-zinc-700 rounded-full p-1">
+                              <Video className="w-3 h-3 text-zinc-400" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-zinc-400">
+                          {/* <span>{media.uploader.fullname}</span>
+                          <span>{formatFileSize(media.fileSize)}</span> */}
+                          <span>
+                            {new Date(media.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            downloadSingleMedia(media);
+                          }}
+                          className="p-2 text-zinc-400 hover:text-amber-400 hover:bg-zinc-700/50 rounded-lg transition-all duration-200"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShare([media]);
+                          }}
+                          className="p-2 text-zinc-400 hover:text-amber-400 hover:bg-zinc-700/50 rounded-lg transition-all duration-200"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+            {/* Load More Button */}
+            {mediaData?.pagination &&
+              mediaData.pagination.totalPages > 1 &&
+              activeFilter === "all" && (
+                <div className="text-center mt-8">
+                  <button className="bg-zinc-800/50 hover:bg-zinc-700/50 backdrop-blur-sm px-6 py-3 rounded-xl text-zinc-200 font-medium border border-zinc-700/50 transition-all duration-200 hover:border-zinc-600/50">
+                    Load More Media
+                    <span className="ml-2 text-zinc-400">
+                      ({mediaData.pagination.page} of{" "}
+                      {mediaData.pagination.totalPages})
+                    </span>
+                  </button>
+                </div>
+              )}
+          </div>
+
+          {/* Selection Actions */}
+          <SelectionActions
+            selectedMedia={selectedMedia}
+            onDownload={() => downloadMultipleMedia(selectedMedia)}
+            onShare={() => handleShare(selectedMedia)}
+            onClearSelection={clearSelection}
+          />
+
+          {/* Share Modal */}
+          <ShareModal
+            isOpen={showShareModal}
+            onClose={() => setShowShareModal(false)}
+            media={shareMedia}
+          />
+
+          {/* Preview Modal */}
+          <PreviewModal
+            isOpen={showPreviewModal}
+            onClose={() => setShowPreviewModal(false)}
+            media={previewMedia}
+            allMedia={displayMedia}
+          />
+
           <UploadModal
             isOpen={showUploadModal}
             onClose={() => setShowUploadModal(false)}
@@ -746,10 +3148,25 @@ export default function EventSlugPage() {
               ...eventData,
               photoCapLimit: Number(eventData.photoCapLimit),
             }}
-            onAddShots={navigateToCamera}
+            onAddShots={navigateToEvent}
           />
+
           {/* Add the BottomNav component */}
-          <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+          <BottomNav
+            activeTab={activeFilter}
+            onTabChange={(tab) => {
+              if (tab === "all" || tab === "my") {
+                setActiveFilter(tab);
+
+                // Fetch appropriate data when tab changes
+                if (tab === "all" && eventData) {
+                  fetchEventMedia(eventData.id);
+                } else if (tab === "my" && eventData) {
+                  fetchMyUploads(eventData.id);
+                }
+              }
+            }}
+          />
         </div>
       </div>
     );
