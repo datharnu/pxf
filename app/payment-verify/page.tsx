@@ -1,16 +1,22 @@
 "use client";
 import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function PaymentVerifyPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
-    const reference = searchParams.get("reference");
-    if (!reference) return;
-    router.replace(`/create-event?reference=${encodeURIComponent(reference)}`);
-  }, [router, searchParams]);
+    try {
+      const url = new URL(window.location.href);
+      const reference = url.searchParams.get("reference");
+      if (!reference) return;
+      router.replace(
+        `/create-event?reference=${encodeURIComponent(reference)}`
+      );
+    } catch {
+      // no-op
+    }
+  }, [router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white">
