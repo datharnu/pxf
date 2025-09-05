@@ -685,7 +685,21 @@ const MultiStepForm: React.FC = () => {
         ? Number(value)
         : value;
 
-    setFormData((prev) => ({ ...prev, [name]: actualValue }));
+    // Special handling: if turning off password protection, clear customPassword
+    if (
+      name === "isPasswordProtected" &&
+      type === "checkbox" &&
+      checked === false
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        isPasswordProtected: false,
+        customPassword: "",
+      }));
+      setValidation((prev) => ({ ...prev, customPassword: true }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: actualValue }));
+    }
 
     // Clear field error when user starts typing
     if (fieldErrors[name]) {
