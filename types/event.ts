@@ -9,6 +9,8 @@ export interface FormData {
   eventDate: string; // New field
   isPasswordProtected: boolean; // New field
   customPassword: string; // New field
+  customGuestLimit?: number; // For CUSTOM guest limits
+  customPhotoCapLimit?: number; // For CUSTOM photo cap limits
 }
 
 export interface ValidationState {
@@ -20,6 +22,8 @@ export interface ValidationState {
   eventDate: boolean;
   isPasswordProtected: boolean;
   customPassword: boolean;
+  customGuestLimit?: boolean; // Valid when guestLimit is CUSTOM
+  customPhotoCapLimit?: boolean; // Valid when photoCapLimit is CUSTOM
 }
 
 export interface StepProps {

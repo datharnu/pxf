@@ -18,6 +18,7 @@ import {
   usePortraitImageStore,
   useFullnameStore,
   useAccessTokenStore,
+  useEmailStore,
 } from "@/store/userStore";
 import GoogleLoginButton from "../create-account/components/GoogleLoginButton";
 
@@ -83,6 +84,9 @@ export default function SignIn() {
             .getState()
             .setPortraitImage(user.profile_pic || "");
           useFullnameStore.getState().setFullname(user.fullname);
+          useEmailStore
+            .getState()
+            .setEmail(user.email?.toLowerCase?.() || user.email);
 
           // Success toast
           toast("Success", {

@@ -237,6 +237,9 @@ export const GUEST_LIMIT_OPTIONS: GuestLimitOptions[] = [
   "500",
   "800",
   "1000+",
+  // Allow custom selection in UI/validation; backend enforces rules
+  // @ts-expect-error extend at runtime for UI logic
+  "CUSTOM",
 ];
 export const PHOTO_CAP_LIMIT_OPTIONS: PhotoCapLimitOptions[] = [
   "5",
@@ -244,16 +247,19 @@ export const PHOTO_CAP_LIMIT_OPTIONS: PhotoCapLimitOptions[] = [
   "15",
   "20",
   "25",
+  // Allow custom selection in UI/validation; backend enforces rules
+  // @ts-expect-error extend at runtime for UI logic
+  "CUSTOM",
 ];
 
 // Price mapping for display purposes
 export const PRICE_MAP: Record<GuestLimitOptions, string> = {
   "10": "FREE",
-  "100": "₦5,000",
-  "250": "₦10,000",
-  "500": "₦15,000",
-  "800": "₦25,000",
-  "1000+": "₦30,000",
+  "100": "₦7,000",
+  "250": "₦12,000",
+  "500": "₦18,000",
+  "800": "₦23,000",
+  "1000+": "₦28,000",
 };
 
 export interface CreateEventPayload {
@@ -265,6 +271,10 @@ export interface CreateEventPayload {
   eventDate: string;
   isPasswordProtected: boolean;
   customPassword?: string;
+  // Included for CUSTOM guest plans; ignored otherwise
+  customGuestLimit?: number;
+  // Included for CUSTOM photo cap plans; ignored otherwise
+  customPhotoCapLimit?: number;
 }
 
 // Separate interface for update payload (only fields that can be updated)
@@ -463,4 +473,126 @@ export const deleteEvent = async (eventId: string) => {
   return authenticatedApiCall<{ success: boolean }>(`/events/${eventId}`, {
     method: "DELETE",
   });
+};
+
+// Payments
+export interface InitPaymentResponse {
+  success: boolean;
+  message: string;
+  authorizationUrl: string;
+  reference: string;
+}
+
+export const initPayment = async (data: {
+  eventId: string;
+  guestLimit: string;
+  photoCapLimit: string;
+  email: string;
+}): Promise<InitPaymentResponse> => {
+  return authenticatedApiCall<InitPaymentResponse>("/payments/init", {
+    method: "POST",
+    data,
+  });
+};
+
+// export const initCustomPayment = async (data: {
+//   eventId: string;
+//   email: string;
+// }): Promise<InitPaymentResponse> => {
+//   return authenticatedApiCall<InitPaymentResponse>("/payments/init-custom", {
+//     method: "POST",
+//     data,
+//   });
+// };
+
+export interface VerifyPaymentResponse {
+  success: boolean;
+  message: string;
+  status: "PAID" | "PENDING" | "FAILED";
+  reference: string;
+}
+
+export const verifyPayment = async (
+  reference: string
+): Promise<VerifyPaymentResponse> => {
+  return authenticatedApiCall<VerifyPaymentResponse>(
+    `/payments/verify/${reference}`
+  );
+};
+
+// Custom payment initialization
+export interface InitCustomPaymentResponse {
+  success: boolean;
+  authorizationUrl: string;
+  reference: string;
+}
+
+export const initCustomPayment = async (data: {
+  eventId: string;
+  email: string;
+}): Promise<InitCustomPaymentResponse> => {
+  return authenticatedApiCall<InitCustomPaymentResponse>(
+    "/payments/init-custom",
+    {
+      method: "POST",
+      data,
+    }
+  );
+};
+
+// Pre-create payment flow (pay first, then create)
+export interface InitPrecreatePaymentResponse {
+  success: boolean;
+  authorizationUrl: string;
+  reference: string;
+}
+
+export const initPrecreatePayment = async (payload: {
+  title: string;
+  description: string;
+  eventFlyer?: string;
+  guestLimit: string;
+  photoCapLimit: string;
+  customGuestLimit?: number;
+  customPhotoCapLimit?: number;
+  eventDate?: string;
+  isPasswordProtected: boolean;
+  customPassword?: string;
+  email: string;
+}): Promise<InitPrecreatePaymentResponse> => {
+  return authenticatedApiCall<InitPrecreatePaymentResponse>(
+    "/payments/init-precreate",
+    {
+      method: "POST",
+      data: payload,
+    }
+  );
+};
+
+export interface VerifyPrecreatePaymentResponse {
+  success: boolean;
+  message: string;
+  event?: {
+    id?: string;
+    title?: string;
+    description?: string;
+    eventDate?: string | null;
+    eventSlug?: string;
+    isPasswordProtected?: boolean;
+    guestLimit?: string;
+    photoCapLimit?: string;
+    eventFlyer?: string | null;
+  };
+  accessInfo?: {
+    qrCodeData?: string;
+    generatedPassword?: string | null;
+  };
+}
+
+export const verifyPrecreatePayment = async (
+  reference: string
+): Promise<VerifyPrecreatePaymentResponse> => {
+  return authenticatedApiCall<VerifyPrecreatePaymentResponse>(
+    `/payment/verify-precreate/${encodeURIComponent(reference)}`
+  );
 };

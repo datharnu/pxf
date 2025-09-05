@@ -428,40 +428,74 @@ import {
   isValidUrl,
   isValidFutureDate,
   CreateEventPayload,
+  initPrecreatePayment,
+  verifyPrecreatePayment,
 } from "../utils/api";
 import { isAuthenticated } from "../utils/auth";
 import {
-  FormData,
+  FormData as CreateEventFormData,
   ValidationState,
   GuestLimitOptions,
   PhotoCapLimitOptions,
 } from "../../types/event";
+import { useEmailStore } from "@/store/userStore";
 
-// Zod schema matching your backend
-const createEventSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  eventFlyer: z.string().url("Event Flyer must be a valid URL").optional(),
-  guestLimit: z.enum(["10", "100", "250", "500", "800", "1000+"]),
-  photoCapLimit: z.enum(["5", "10", "15", "20", "25"]),
-  eventDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
-    message: "Event Date must be a valid date",
-  }),
-  isPasswordProtected: z.boolean(),
-  customPassword: z
-    .string()
-    .min(4, "Custom Password must be at least 4 characters")
-    .optional(),
-});
+// Zod schema matching your backend (with optional customPhotoCapLimit)
+const createEventSchema = z
+  .object({
+    title: z.string().min(3, "Title must be at least 3 characters"),
+    description: z
+      .string()
+      .min(10, "Description must be at least 10 characters"),
+    eventFlyer: z.string().url("Event Flyer must be a valid URL").optional(),
+    guestLimit: z.union([
+      z.enum(["10", "100", "250", "500", "800", "1000+"]),
+      z.literal("CUSTOM"),
+    ]),
+    photoCapLimit: z.union([
+      z.enum(["5", "10", "15", "20", "25"]),
+      z.literal("CUSTOM"),
+    ]),
+    customGuestLimit: z.number().int().min(1001).optional(),
+    customPhotoCapLimit: z.number().int().min(26).optional(),
+    eventDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
+      message: "Event Date must be a valid date",
+    }),
+    isPasswordProtected: z.boolean(),
+    customPassword: z
+      .string()
+      .min(4, "Custom Password must be at least 4 characters")
+      .optional(),
+  })
+  .refine(
+    (data) =>
+      data.guestLimit !== "CUSTOM" ||
+      (typeof data.customGuestLimit === "number" &&
+        data.customGuestLimit >= 1001),
+    {
+      message: "customGuestLimit must be provided and >= 1001 for CUSTOM",
+      path: ["customGuestLimit"],
+    }
+  )
+  .refine(
+    (data) =>
+      data.photoCapLimit !== "CUSTOM" ||
+      (typeof data.customPhotoCapLimit === "number" &&
+        data.customPhotoCapLimit > 25),
+    {
+      message: "customPhotoCapLimit must be provided and > 25 for CUSTOM",
+      path: ["customPhotoCapLimit"],
+    }
+  );
 
-type FormFieldNames = keyof FormData;
+type FormFieldNames = keyof CreateEventFormData;
 
 const MultiStepForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const totalSteps: number = 5;
   const formContainerRef = useRef<HTMLDivElement>(null);
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<CreateEventFormData>({
     title: "",
     description: "",
     eventFlyer: "",
@@ -470,6 +504,8 @@ const MultiStepForm: React.FC = () => {
     eventDate: "",
     isPasswordProtected: false,
     customPassword: "",
+    customGuestLimit: undefined,
+    customPhotoCapLimit: undefined,
   });
 
   const [validation, setValidation] = useState<ValidationState>({
@@ -481,6 +517,7 @@ const MultiStepForm: React.FC = () => {
     eventDate: false,
     isPasswordProtected: true, // Boolean, always valid
     customPassword: true, // Optional initially
+    customGuestLimit: true,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -523,6 +560,59 @@ const MultiStepForm: React.FC = () => {
     stepFiveInView,
   ]);
 
+  // Verify Paystack pre-create payment on callback
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const reference = url.searchParams.get("reference");
+      if (!reference) return;
+
+      if (sessionStorage.getItem(`verified:${reference}`)) return;
+
+      (async () => {
+        try {
+          setIsSubmitting(true);
+          const res = await verifyPrecreatePayment(reference);
+          const event = res?.event;
+          const accessInfo = res?.accessInfo;
+
+          if (event?.id) {
+            const modalData = {
+              id: event.id,
+              title: event.title ?? "",
+              description: event.description ?? "",
+              eventDate: event.eventDate ?? null,
+              eventSlug: event.eventSlug ?? "",
+              qrCodeData: accessInfo?.qrCodeData ?? "",
+              isPasswordProtected: !!event.isPasswordProtected,
+              accessPassword: accessInfo?.generatedPassword ?? null,
+              guestLimit: event.guestLimit ?? "",
+              photoCapLimit: event.photoCapLimit ?? "",
+              eventFlyer: event.eventFlyer ?? null,
+            };
+
+            setCreatedEventData(modalData);
+            setShowSuccessModal(true);
+            sessionStorage.setItem(`verified:${reference}`, "1");
+            // Clean URL
+            url.searchParams.delete("reference");
+            window.history.replaceState({}, "", url.toString());
+          } else {
+            setSubmitError("Payment verified but event was not created.");
+          }
+        } catch {
+          setSubmitError(
+            "Unable to verify payment. If you were charged, please contact support."
+          );
+        } finally {
+          setIsSubmitting(false);
+        }
+      })();
+    } catch {
+      // ignore URL constructor errors
+    }
+  }, []);
+
   // Update password validation when isPasswordProtected changes
   useEffect(() => {
     if (formData.isPasswordProtected) {
@@ -549,12 +639,14 @@ const MultiStepForm: React.FC = () => {
       case "guestLimit":
         return (
           typeof value === "string" &&
-          GUEST_LIMIT_OPTIONS.includes(value as GuestLimitOptions)
+          (value === "CUSTOM" ||
+            GUEST_LIMIT_OPTIONS.includes(value as GuestLimitOptions))
         );
       case "photoCapLimit":
         return (
           typeof value === "string" &&
-          PHOTO_CAP_LIMIT_OPTIONS.includes(value as PhotoCapLimitOptions)
+          (value === "CUSTOM" ||
+            PHOTO_CAP_LIMIT_OPTIONS.includes(value as PhotoCapLimitOptions))
         );
       case "eventDate":
         return typeof value === "string" && isValidFutureDate(value);
@@ -564,6 +656,13 @@ const MultiStepForm: React.FC = () => {
         return (
           !formData.isPasswordProtected ||
           (typeof value === "string" && value.length >= 4)
+        );
+      case "customGuestLimit":
+        return (
+          formData.guestLimit !== "CUSTOM" ||
+          (typeof value === "number" &&
+            Number.isInteger(value) &&
+            value >= 1001)
         );
       default:
         return true;
@@ -577,7 +676,12 @@ const MultiStepForm: React.FC = () => {
     const target = e.target as HTMLInputElement;
     const checked = target.checked;
 
-    const actualValue = type === "checkbox" ? checked : value;
+    const actualValue =
+      type === "checkbox"
+        ? checked
+        : name === "customGuestLimit"
+        ? Number(value)
+        : value;
 
     setFormData((prev) => ({ ...prev, [name]: actualValue }));
 
@@ -607,7 +711,7 @@ const MultiStepForm: React.FC = () => {
       case 3:
         return validation.eventFlyer;
       case 4:
-        return validation.guestLimit;
+        return validation.guestLimit && validation.customGuestLimit !== false;
       case 5:
         return (
           validation.photoCapLimit &&
@@ -635,93 +739,9 @@ const MultiStepForm: React.FC = () => {
     }
   };
 
-  // const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
-  //   e.preventDefault();
-
-  //   // Check authentication first
-  //   if (!isAuthenticated()) {
-  //     setSubmitError("Please sign in to create an event");
-  //     return;
-  //   }
-
-  //   setIsSubmitting(true);
-  //   setSubmitError("");
-  //   setFieldErrors({});
-
-  //   try {
-  //     // Prepare payload for API
-  //     const payload: CreateEventPayload = {
-  //       title: formData.title,
-  //       description: formData.description,
-  //       eventFlyer: formData.eventFlyer || undefined,
-  //       guestLimit: formData.guestLimit as GuestLimitOptions,
-  //       photoCapLimit: formData.photoCapLimit as PhotoCapLimitOptions,
-  //       eventDate: formData.eventDate,
-  //       isPasswordProtected: formData.isPasswordProtected,
-  //       customPassword: formData.isPasswordProtected
-  //         ? formData.customPassword
-  //         : undefined,
-  //     };
-
-  //     // Validate with Zod schema before sending
-  //     createEventSchema.parse(payload);
-
-  //     // Submit to API
-  //     console.log("Submitting payload:", payload);
-  //     const eventData = await createEvent(payload);
-  //     console.log("API response:", eventData);
-
-  //     // Show success modal with event data
-  //     setCreatedEventData({
-  //       id: eventData.id,
-  //       title: eventData.title,
-  //       description: eventData.description,
-  //       eventDate: eventData.eventDate,
-  //       eventSlug: eventData.eventSlug,
-  //       qrCodeData: eventData.qrCodeData,
-  //       isPasswordProtected: eventData.isPasswordProtected,
-  //       accessPassword: eventData.accessPassword,
-  //       guestLimit: eventData.guestLimit,
-  //       photoCapLimit: eventData.photoCapLimit,
-  //       eventFlyer: eventData.eventFlyer,
-  //     });
-  //     setShowSuccessModal(true);
-  //   } catch (error) {
-  //     console.error("Error creating event:", error);
-
-  //     if (error instanceof z.ZodError) {
-  //       // Handle Zod validation errors
-  //       const errors: Record<string, string> = {};
-  //       error.errors.forEach((err) => {
-  //         if (err.path.length > 0) {
-  //           errors[err.path[0] as string] = err.message;
-  //         }
-  //       });
-  //       setFieldErrors(errors);
-  //       setSubmitError("Please check all fields and try again");
-  //     } else if (error instanceof ApiError) {
-  //       // Handle API errors
-  //       if (error.errors) {
-  //         const errors: Record<string, string> = {};
-  //         Object.entries(error.errors).forEach(([field, messages]) => {
-  //           errors[field] = messages[0]; // Take first error message
-  //         });
-  //         setFieldErrors(errors);
-  //       }
-  //       setSubmitError(error.message);
-  //     } else {
-  //       // Handle unexpected errors
-  //       setSubmitError("An unexpected error occurred. Please try again.");
-  //     }
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
-
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
 
-    // Check authentication first
     if (!isAuthenticated()) {
       setSubmitError("Please sign in to create an event");
       return;
@@ -732,7 +752,7 @@ const MultiStepForm: React.FC = () => {
     setFieldErrors({});
 
     try {
-      // Prepare payload for API
+      // Base payload
       const payload: CreateEventPayload = {
         title: formData.title,
         description: formData.description,
@@ -746,120 +766,129 @@ const MultiStepForm: React.FC = () => {
           : undefined,
       };
 
-      // Validate with Zod schema before sending
-      createEventSchema.parse(payload);
-
-      console.log("Sending payload to API:", payload);
-
-      // Submit to API
-      const apiResponse = await createEvent(payload);
-
-      console.log("Full API Response:", apiResponse);
-      console.log("API Response Type:", typeof apiResponse);
-      console.log(
-        "API Response Keys:",
-        apiResponse ? Object.keys(apiResponse) : "null/undefined"
-      );
-
-      // Handle different response structures
+      // Add custom values when selected
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let eventData: any;
-
-      // Check if response is wrapped in a data property (common pattern)
-      if (apiResponse && typeof apiResponse === "object") {
-        if ("data" in apiResponse && apiResponse.data) {
-          console.log("Response has data property:", apiResponse.data);
-          eventData = apiResponse.data;
-        } else if ("event" in apiResponse && apiResponse.event) {
-          console.log("Response has event property:", apiResponse.event);
-          eventData = apiResponse.event;
-        } else {
-          console.log("Using direct response:", apiResponse);
-          eventData = apiResponse;
+      const finalPayload: any = { ...payload };
+      if (formData.guestLimit === "CUSTOM") {
+        finalPayload.guestLimit = "CUSTOM";
+        finalPayload.customGuestLimit = Number(formData.customGuestLimit);
+      }
+      if (formData.photoCapLimit === "CUSTOM") {
+        finalPayload.photoCapLimit = "CUSTOM";
+        if (typeof formData.customPhotoCapLimit === "number") {
+          finalPayload.customPhotoCapLimit = Number(
+            formData.customPhotoCapLimit
+          );
         }
-      } else {
-        throw new Error("Invalid API response format");
       }
 
-      console.log("Extracted event data:", eventData);
+      // Validate payload
+      createEventSchema.parse(finalPayload);
+      // Determine if selected plan is free
+      const isFreePlan =
+        String(formData.guestLimit) === "10" &&
+        String(formData.photoCapLimit) === "5";
 
-      // Define a type for the extracted event data
-      interface ExtractedEventData {
-        id?: string;
-        _id?: string;
-        eventId?: string;
-        title?: string;
-        description?: string;
-        eventDate?: string;
-        date?: string;
-        createdAt?: string;
-        eventSlug?: string;
-        slug?: string;
-        qrCodeData?: string;
-        qrCode?: string;
-        qr_code?: string;
-        qrCodeUrl?: string;
-        isPasswordProtected?: boolean;
-        accessPassword?: string;
-        password?: string;
-        customPassword?: string;
-        guestLimit?: string;
-        photoCapLimit?: string;
-        eventFlyer?: string;
+      if (isFreePlan) {
+        // Free plan: create immediately
+        const apiResponse = await createEvent(
+          finalPayload as CreateEventPayload
+        );
+        const event = (
+          apiResponse as unknown as {
+            event?: unknown;
+            accessInfo?: unknown;
+          } as {
+            event?: {
+              id?: string;
+              title?: string;
+              description?: string;
+              eventDate?: string | null;
+              eventSlug?: string;
+              isPasswordProtected?: boolean;
+              guestLimit?: string;
+              photoCapLimit?: string;
+              eventFlyer?: string | null;
+            };
+            accessInfo?: {
+              qrCodeData?: string;
+              generatedPassword?: string | null;
+            };
+          }
+        ).event;
+        const accessInfo = (
+          apiResponse as unknown as {
+            accessInfo?: {
+              qrCodeData?: string;
+              generatedPassword?: string | null;
+            };
+          }
+        ).accessInfo;
+
+        if (!event || !event.id) {
+          throw new Error("Invalid createEvent response: missing event");
+        }
+
+        const modalData = {
+          id: event.id,
+          title: event.title ?? formData.title,
+          description: event.description ?? formData.description,
+          eventDate: event.eventDate ?? formData.eventDate ?? null,
+          eventSlug: event.eventSlug ?? "",
+          qrCodeData: accessInfo?.qrCodeData ?? "",
+          isPasswordProtected: !!event.isPasswordProtected,
+          accessPassword: accessInfo?.generatedPassword ?? null,
+          guestLimit: event.guestLimit ?? String(formData.guestLimit),
+          photoCapLimit: event.photoCapLimit ?? String(formData.photoCapLimit),
+          eventFlyer: event.eventFlyer ?? formData.eventFlyer ?? null,
+        };
+
+        setCreatedEventData(modalData);
+        setShowSuccessModal(true);
+        return;
       }
 
-      // Cast to our extracted event data type
-      const extractedData = eventData as ExtractedEventData;
+      // Paid plans: init pre-create payment with full draft and email, then redirect
+      const storedEmail =
+        useEmailStore.getState().email ??
+        (typeof window !== "undefined"
+          ? JSON.parse(localStorage.getItem("email-storage") || "null")?.state
+              ?.email ?? null
+          : null);
 
-      // Map the response to match the expected modal data structure
-      const modalData = {
-        id:
-          extractedData.id || extractedData._id || extractedData.eventId || "",
-        title: extractedData.title || formData.title,
-        description: extractedData.description || formData.description,
-        eventDate:
-          extractedData.eventDate ||
-          extractedData.date ||
-          extractedData.createdAt ||
-          formData.eventDate,
-        eventSlug:
-          extractedData.eventSlug ||
-          extractedData.slug ||
-          extractedData.id ||
-          "",
-        qrCodeData:
-          extractedData.qrCodeData ||
-          extractedData.qrCode ||
-          extractedData.qr_code ||
-          extractedData.qrCodeUrl ||
-          "",
-        isPasswordProtected:
-          extractedData.isPasswordProtected ?? formData.isPasswordProtected,
-        accessPassword:
-          extractedData.accessPassword ||
-          extractedData.password ||
-          extractedData.customPassword ||
-          (formData.isPasswordProtected ? formData.customPassword : null),
-        guestLimit: extractedData.guestLimit || formData.guestLimit,
-        photoCapLimit: extractedData.photoCapLimit || formData.photoCapLimit,
-        eventFlyer: extractedData.eventFlyer || formData.eventFlyer || null,
-      };
-
-      console.log("Final modal data:", modalData);
-
-      // Validate that we have essential data
-      if (!modalData.id && !modalData.eventSlug) {
-        console.warn("Missing essential event identifiers");
+      if (!storedEmail) {
+        setSubmitError(
+          "Email required to initialize payment. Please sign in again."
+        );
+        return;
       }
 
-      // Show success modal with event data
-      setCreatedEventData(modalData);
-      setShowSuccessModal(true);
+      const precreate = await initPrecreatePayment({
+        title: finalPayload.title,
+        description: finalPayload.description,
+        eventFlyer: finalPayload.eventFlyer,
+        guestLimit: String(finalPayload.guestLimit),
+        photoCapLimit: String(finalPayload.photoCapLimit),
+        customGuestLimit: finalPayload.customGuestLimit,
+        customPhotoCapLimit: finalPayload.customPhotoCapLimit,
+        eventDate: finalPayload.eventDate,
+        isPasswordProtected: finalPayload.isPasswordProtected,
+        customPassword: finalPayload.customPassword,
+        email: storedEmail,
+      });
+
+      if (precreate?.authorizationUrl) {
+        window.location.href = precreate.authorizationUrl;
+        return;
+      }
+
+      setSubmitError(
+        "Unable to start payment. Please try again or contact support."
+      );
     } catch (error) {
       console.error("Error creating event:", error);
 
       if (error instanceof z.ZodError) {
-        // Handle Zod validation errors
         const errors: Record<string, string> = {};
         error.errors.forEach((err) => {
           if (err.path.length > 0) {
@@ -869,17 +898,17 @@ const MultiStepForm: React.FC = () => {
         setFieldErrors(errors);
         setSubmitError("Please check all fields and try again");
       } else if (error instanceof ApiError) {
-        // Handle API errors
         if (error.errors) {
           const errors: Record<string, string> = {};
           Object.entries(error.errors).forEach(([field, messages]) => {
-            errors[field] = Array.isArray(messages) ? messages[0] : messages;
+            errors[field] = Array.isArray(messages)
+              ? messages[0]
+              : (messages as string);
           });
           setFieldErrors(errors);
         }
         setSubmitError(error.message);
       } else {
-        // Handle unexpected errors
         setSubmitError("An unexpected error occurred. Please try again.");
       }
     } finally {
