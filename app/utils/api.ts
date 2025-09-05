@@ -593,6 +593,6 @@ export const verifyPrecreatePayment = async (
   reference: string
 ): Promise<VerifyPrecreatePaymentResponse> => {
   return authenticatedApiCall<VerifyPrecreatePaymentResponse>(
-    `/payment/verify-precreate/${encodeURIComponent(reference)}`
+    `/payments/verify-precreate/${encodeURIComponent(reference)}`
   );
 };
