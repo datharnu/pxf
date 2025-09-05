@@ -585,7 +585,9 @@ const MultiStepForm: React.FC = () => {
               eventSlug: event.eventSlug ?? "",
               qrCodeData: accessInfo?.qrCodeData ?? "",
               isPasswordProtected: !!event.isPasswordProtected,
-              accessPassword: accessInfo?.generatedPassword ?? null,
+              accessPassword: event.isPasswordProtected
+                ? accessInfo?.generatedPassword ?? null
+                : null,
               guestLimit: event.guestLimit ?? "",
               photoCapLimit: event.photoCapLimit ?? "",
               eventFlyer: event.eventFlyer ?? null,
@@ -837,7 +839,9 @@ const MultiStepForm: React.FC = () => {
           eventSlug: event.eventSlug ?? "",
           qrCodeData: accessInfo?.qrCodeData ?? "",
           isPasswordProtected: !!event.isPasswordProtected,
-          accessPassword: accessInfo?.generatedPassword ?? null,
+          accessPassword: event.isPasswordProtected
+            ? accessInfo?.generatedPassword ?? null
+            : null,
           guestLimit: event.guestLimit ?? String(formData.guestLimit),
           photoCapLimit: event.photoCapLimit ?? String(formData.photoCapLimit),
           eventFlyer: event.eventFlyer ?? formData.eventFlyer ?? null,
