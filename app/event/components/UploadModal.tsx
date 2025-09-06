@@ -84,6 +84,9 @@ export function UploadModal({
   >("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [optimisticRemaining, setOptimisticRemaining] = useState<number | null>(
+    null
+  );
 
   // Fetch upload stats with proper error handling
   const {
@@ -194,6 +197,11 @@ export function UploadModal({
         );
       }
 
+      // Optimistically show reduced remaining uploads while uploading
+      setOptimisticRemaining(
+        Math.max(0, signatureResponse.remainingUploads - files.length)
+      );
+
       // Upload files to Cloudinary with progress tracking
       const results: CloudinaryUploadResult[] = [];
       let completed = 0;
@@ -235,6 +243,7 @@ export function UploadModal({
 
         // Refresh the stats
         await refetchStats();
+        setOptimisticRemaining(null);
 
         // Call the success callback if provided
         if (onUploadSuccess) {
@@ -249,6 +258,7 @@ export function UploadModal({
           setIsUploading(false);
           setUploadProgress(0);
           setUploadStatus("idle");
+          setOptimisticRemaining(null);
           // Reset file input
           if (fileInputRef.current) {
             fileInputRef.current.value = "";
@@ -262,6 +272,7 @@ export function UploadModal({
       setUploadStatus("error");
       setErrorMessage(error instanceof Error ? error.message : "Upload failed");
       setIsUploading(false);
+      setOptimisticRemaining(null);
     }
   };
 
@@ -274,7 +285,9 @@ export function UploadModal({
   // Calculate remaining uploads
   const remainingUploads =
     uploadStats?.remainingUploads ?? eventData.photoCapLimit;
-  const hasUploadsRemaining = remainingUploads > 0;
+  const displayRemaining =
+    optimisticRemaining !== null ? optimisticRemaining : remainingUploads;
+  const hasUploadsRemaining = displayRemaining > 0;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -309,7 +322,7 @@ export function UploadModal({
             ) : (
               <div className="inline-flex items-center gap-2 px-3 py-1">
                 <p className="text-sm text-amber-300 font-medium">
-                  {remainingUploads} of {eventData.photoCapLimit} uploads
+                  {displayRemaining} of {eventData.photoCapLimit} uploads
                   remaining
                 </p>
               </div>
@@ -321,7 +334,7 @@ export function UploadModal({
         <div className="p-6 space-y-5">
           {hasUploadsRemaining ? (
             <p className="text-sm text-zinc-400 text-center">
-              Select your best {remainingUploads} photo(s) or video(s)!
+              Select your best {displayRemaining} photo(s) or video(s)!
             </p>
           ) : (
             <p className="text-sm text-zinc-400 text-center">

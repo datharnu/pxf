@@ -44,6 +44,7 @@ import { EventMediaResponse } from "@/types/media";
 import { SelectionActions } from "../components/SelectedAction";
 import { MediaActionsMenu } from "../components/MediaActionMenu";
 import { ShareModal } from "../components/ShareModal";
+import PhotobookComingSoon from "../components/PhotobookModal";
 
 // Add this interface for the my-uploads response
 interface MyUploadsResponse {
@@ -457,11 +458,11 @@ export default function EventSlugPage() {
   const [error, setError] = useState("");
   const [showFlyer, setShowFlyer] = useState(true);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<"all" | "my">("all");
+  const [activeFilter, setActiveFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMorePages, setHasMorePages] = useState(false);
-
+  const [showPhotobookModal, setShowPhotobookModal] = useState(false);
   // Selection and sharing states
   const [selectedMedia, setSelectedMedia] = useState<MediaItem[]>([]);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -469,6 +470,58 @@ export default function EventSlugPage() {
   const [shareMedia, setShareMedia] = useState<MediaItem[]>([]);
   const [previewMedia, setPreviewMedia] = useState<MediaItem | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+
+  // Local storage helpers for remembering event password per slug
+  const getStoredEventPassword = (eventSlug: string | null | undefined) => {
+    if (typeof window === "undefined" || !eventSlug) return null;
+    try {
+      return localStorage.getItem(`event_pwd:${eventSlug}`);
+    } catch {
+      return null;
+    }
+  };
+
+  const setStoredEventPassword = (
+    eventSlug: string | null | undefined,
+    value: string
+  ) => {
+    if (typeof window === "undefined" || !eventSlug) return;
+    try {
+      localStorage.setItem(`event_pwd:${eventSlug}`, value);
+    } catch {}
+  };
+
+  const clearStoredEventPassword = (eventSlug: string | null | undefined) => {
+    if (typeof window === "undefined" || !eventSlug) return;
+    try {
+      localStorage.removeItem(`event_pwd:${eventSlug}`);
+    } catch {}
+  };
+
+  // Participants and user uploads state
+  interface ParticipantItem {
+    id: string;
+    fullname: string;
+    uploadsCount?: number;
+  }
+
+  interface UserUploadsResponse {
+    success: boolean;
+    message: string;
+    user: { id: string; fullname: string; email?: string };
+    uploads: MediaItem[];
+    pagination?: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+    eventInfo: { id: string; title: string };
+  }
+
+  const [participants, setParticipants] = useState<ParticipantItem[]>([]);
+  const [userUploadsData, setUserUploadsData] =
+    useState<UserUploadsResponse | null>(null);
 
   const handlePreview = (media: MediaItem) => {
     setPreviewMedia(media);
@@ -583,6 +636,51 @@ export default function EventSlugPage() {
       }
     } catch (error: any) {
       console.error("Error fetching media:", error);
+    } finally {
+      setMediaLoading(false);
+    }
+  };
+
+  // Fetch participants
+  const fetchParticipants = async (eventId: string) => {
+    try {
+      const response = await api.get(`/media/event/${eventId}/participants`);
+      const raw = response.data || {};
+      const participantsArray =
+        raw.participants || raw.users || raw.data || raw || [];
+      if (Array.isArray(participantsArray)) {
+        const list: ParticipantItem[] = participantsArray.map((p: any) => ({
+          id: p?.user?.id ?? p?.id ?? p?.uploadedBy,
+          fullname: p?.user?.fullname ?? p?.fullname ?? "Unknown User",
+          uploadsCount: p?.uploadCount ?? p?.uploadsCount,
+          imagesCount: p?.imagesCount ?? p?.mediaBreakdown?.image ?? 0,
+          videosCount: p?.videosCount ?? p?.mediaBreakdown?.video ?? 0,
+        }));
+        setParticipants(list.filter((x) => Boolean(x.id)));
+      }
+    } catch (error) {
+      console.error("Error fetching participants:", error);
+    }
+  };
+
+  // Fetch uploads for a specific user
+  const fetchUserUploads = async (
+    eventId: string,
+    userId: string,
+    page: number = 1,
+    mediaType?: "image" | "video"
+  ) => {
+    try {
+      setMediaLoading(true);
+      const mt = mediaType ? `&mediaType=${mediaType}` : "";
+      const response = await api.get(
+        `/media/event/${eventId}/user/${userId}?page=${page}&limit=20${mt}`
+      );
+      if (response.data?.success) {
+        setUserUploadsData(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching user uploads:", error);
     } finally {
       setMediaLoading(false);
     }
@@ -792,9 +890,14 @@ export default function EventSlugPage() {
       if (activeFilter === "all") {
         // Reset to page 1 when switching to "All" tab
         fetchEventMedia(eventData.id, 1, false);
-      } else {
+      } else if (activeFilter === "my") {
         // My uploads doesn't seem to have pagination based on the API response
         fetchMyUploads(eventData.id);
+      } else if (activeFilter.startsWith("user:") && eventData.id) {
+        const userId = activeFilter.split(":")[1];
+        if (userId) {
+          fetchUserUploads(eventData.id, userId, 1);
+        }
       }
     }
   }, [eventData, needsPassword, activeFilter]);
@@ -805,12 +908,33 @@ export default function EventSlugPage() {
       setLoading(true);
       setError("");
 
-      const result = await processEventAccess(slug);
+      // First attempt without password
+      let result = await processEventAccess(slug);
       console.log("processEventAccess returned:", result);
+
+      // If password is needed, try using stored password automatically
+      if (!result.success && result.needsPassword) {
+        const stored = getStoredEventPassword(slug);
+        if (stored) {
+          console.log("Trying stored password for slug", slug);
+          const retry = await processEventAccess(slug, stored);
+          if (retry.success && retry.event) {
+            result = retry;
+          } else if (retry.needsPassword) {
+            // Stored password invalid now; clear it
+            clearStoredEventPassword(slug);
+            result = retry;
+          } else {
+            result = retry;
+          }
+        }
+      }
 
       if (result.success && result.event) {
         setEventData(result.event);
         setNeedsPassword(false);
+        // Preload participants for chooser
+        fetchParticipants(result.event.id);
       } else if (result.needsPassword) {
         setNeedsPassword(true);
       } else {
@@ -840,8 +964,12 @@ export default function EventSlugPage() {
       if (result.success && result.event) {
         setEventData(result.event);
         setNeedsPassword(false);
+        // Remember the successful password for this event slug
+        setStoredEventPassword(slug, password);
         toast.success("Access granted! Welcome to the event.");
       } else if (result.needsPassword) {
+        // Ensure we do not keep an invalid stored password
+        clearStoredEventPassword(slug);
         toast.error(result.message || "Invalid password");
       } else {
         toast.error(result.message || "Failed to access event");
@@ -890,10 +1018,20 @@ export default function EventSlugPage() {
     setShowFlyer(false);
   };
 
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/");
+    }
+  };
+
   // Determine which media to display based on active filter
   const displayMedia =
     activeFilter === "my" && myUploadsData
       ? myUploadsData.uploads
+      : activeFilter.startsWith("user:") && userUploadsData
+      ? userUploadsData.uploads
       : mediaData?.media || [];
 
   // Determine which stats to display based on active filter
@@ -904,6 +1042,17 @@ export default function EventSlugPage() {
           totalVideos: myUploadsData.stats.videosCount,
           totalParticipants: 1, // Just the current user
           totalMedia: myUploadsData.stats.totalUploads,
+        }
+      : activeFilter.startsWith("user:") && userUploadsData
+      ? {
+          totalPhotos: userUploadsData.uploads.filter((m) =>
+            isImage(m.mimeType)
+          ).length,
+          totalVideos: userUploadsData.uploads.filter((m) =>
+            isVideo(m.mimeType)
+          ).length,
+          totalParticipants: 1,
+          totalMedia: userUploadsData.uploads.length,
         }
       : mediaData?.participantStats || {
           totalPhotos: 0,
@@ -917,7 +1066,7 @@ export default function EventSlugPage() {
       <div className="min-h-screen bg-primary flex items-center justify-center p-4">
         <Card className="w-full max-w-md bg-white">
           <CardContent className="flex items-center justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-amber-600" />
             <span className="ml-2 text-lg">Loading event...</span>
           </CardContent>
         </Card>
@@ -1051,13 +1200,13 @@ export default function EventSlugPage() {
           {/* Event Header */}
           <div className="relative">
             {/* Mobile Layout */}
-            <div className="block md:hidden pb-5">
+            <div className="block md:hidden [@media(min-width:425px)]:pb-5  [@media(min-width:375px)]:pb-8">
               <div className="flex flex-col gap-6">
                 {/* Event Flyer Thumbnail */}
                 {eventData.eventFlyer && (
                   <div className="w-full">
                     <div
-                      className="relative aspect-[7/4] overflow-hidden cursor-pointer"
+                      className="relative [@media(min-width:425px)]:aspect-[7/4] [@media(min-width:375px)]:aspect-[5/3] overflow-hidden cursor-pointer"
                       onClick={() => setShowFlyer(true)}
                     >
                       <Image
@@ -1076,7 +1225,7 @@ export default function EventSlugPage() {
                   {/* Back Button */}
                   <div className="mt-5">
                     <button
-                      onClick={() => router.push("/")}
+                      onClick={handleBack}
                       className="text-white hover:bg-white/10 bg-[#f0eded]/30 backdrop-blur-sm rounded-full p-2 transition-all duration-200"
                     >
                       <ArrowLeft className="w-4 h-4" />
@@ -1096,9 +1245,9 @@ export default function EventSlugPage() {
                     <p>{displayStats.totalVideos} Videos</p> .
                     <p>{displayStats.totalParticipants} Participants</p>
                   </div>
-                  <div className="flex gap-3 items-center">
+                  <div className="flex gap-3 items-center pt-4">
                     <button
-                      className="flex items-center gap-1 mt-4 bg-[#494949] backdrop-blur-sm px-3 py-2.5 rounded-full hover:bg-zinc-700/70 transition-all duration-200"
+                      className="flex items-center gap-1  bg-[#494949] backdrop-blur-sm px-3 py-2.5 rounded-full hover:bg-zinc-700/70 transition-all duration-200"
                       onClick={handleUploadClick}
                     >
                       <Plus className="w-4 h-4 text-amber-400" />
@@ -1107,7 +1256,7 @@ export default function EventSlugPage() {
                       </span>
                     </button>
                     <button
-                      className="flex items-center gap-2 mt-4 bg-[#494949] backdrop-blur-sm px-3 py-2.5 rounded-full hover:bg-zinc-700/70 transition-all duration-200"
+                      className="flex items-center gap-2 bg-[#494949] backdrop-blur-sm px-3 py-2.5 rounded-full hover:bg-zinc-700/70 transition-all duration-200"
                       onClick={() => downloadMultipleMedia(displayMedia)}
                     >
                       <Download className="w-4 h-4 text-amber-400" />
@@ -1115,7 +1264,10 @@ export default function EventSlugPage() {
                         Export
                       </span>
                     </button>
-                    <button className="flex items-center gap-2 mt-4 bg-[#494949] backdrop-blur-sm px-3 py-2.5 rounded-full hover:bg-zinc-700/70 transition-all duration-200">
+                    <button
+                      onClick={() => setShowPhotobookModal(true)}
+                      className="flex items-center gap-2  bg-[#494949] backdrop-blur-sm px-3 py-2.5 rounded-full hover:bg-zinc-700/70 transition-all duration-200"
+                    >
                       <Images className="w-4 h-4 text-amber-400" />
                       <span className="text-white text-xs font-bold">
                         Photobook
@@ -1156,7 +1308,7 @@ export default function EventSlugPage() {
                   {/* Back Button */}
                   <div className="flex justify-between items-center">
                     <button
-                      onClick={() => router.push("/")}
+                      onClick={handleBack}
                       className="text-zinc-400 hover:text-zinc-200 bg-zinc-800/50 backdrop-blur-sm rounded-xl p-3 transition-all duration-200 hover:bg-zinc-700/50 group"
                     >
                       <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-200" />
@@ -1404,8 +1556,8 @@ export default function EventSlugPage() {
                         />
                       )}
 
-                      {/* Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      {/* Overlay: always visible on mobile/tablet, hover on large screens */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/60 via-transparent to-transparent opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-200">
                         <div className="absolute bottom-3 left-3 right-3">
                           <p className="text-white text-sm font-medium truncate mb-1">
                             {media.fileName}
@@ -1419,11 +1571,11 @@ export default function EventSlugPage() {
                         </div>
                       </div>
 
-                      {/* Actions menu button */}
+                      {/* Actions menu button: always visible on mobile/tablet, hover on large screens */}
                       <div className="absolute top-3 right-3">
                         <button
                           onClick={(e) => toggleMenu(media.id, e)}
-                          className="bg-zinc-900/70 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-zinc-800/90"
+                          className="bg-zinc-900/70 backdrop-blur-sm rounded-full p-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 hover:bg-zinc-800/90"
                         >
                           <MoreVertical className="w-4 h-4 text-white" />
                         </button>
@@ -1610,6 +1762,11 @@ export default function EventSlugPage() {
             allMedia={displayMedia}
           />
 
+          {/* <PhotobookComingSoon
+            isOpen={showPhotobookModal}
+            onClose={() => setShowPhotobookModal(false)}
+          /> */}
+
           <UploadModal
             isOpen={showUploadModal}
             onClose={() => setShowUploadModal(false)}
@@ -1632,17 +1789,40 @@ export default function EventSlugPage() {
           <BottomNav
             activeTab={activeFilter}
             onTabChange={(tab) => {
-              if (tab === "all" || tab === "my") {
-                setActiveFilter(tab);
-
-                // Fetch appropriate data when tab changes
-                if (tab === "all" && eventData) {
-                  fetchEventMedia(eventData.id);
-                } else if (tab === "my" && eventData) {
-                  fetchMyUploads(eventData.id);
-                }
+              setActiveFilter(tab);
+              if (!eventData) return;
+              if (tab === "all") {
+                fetchEventMedia(eventData.id);
+              } else if (tab === "my") {
+                fetchMyUploads(eventData.id);
+              } else if (tab.startsWith("user:")) {
+                const userId = tab.split(":")[1];
+                if (userId) fetchUserUploads(eventData.id, userId, 1);
               }
             }}
+            participants={participants}
+            onSelectUser={(user) => {
+              if (eventData) {
+                fetchUserUploads(eventData.id, user.id, 1);
+              }
+            }}
+            onOpenChooser={() => {
+              if (eventData?.id) {
+                fetchParticipants(eventData.id);
+              }
+            }}
+            allCounts={{
+              photos: displayStats.totalPhotos,
+              videos: displayStats.totalVideos,
+            }}
+            myCounts={
+              myUploadsData
+                ? {
+                    photos: myUploadsData.stats.imagesCount,
+                    videos: myUploadsData.stats.videosCount,
+                  }
+                : undefined
+            }
           />
         </div>
       </div>

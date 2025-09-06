@@ -277,7 +277,11 @@ function MyEventsContent() {
                 className=" flex items-center gap-5 shadow-sm hover:shadow-md transition-shadow"
               >
                 {/* Event Image */}
-                <div className="">
+                <div
+                  className="cursor-pointer"
+                  onClick={() => router.push(`/event/${event.eventSlug}`)}
+                  title="Open event"
+                >
                   {event.eventFlyer ? (
                     <Image
                       src={event.eventFlyer}
