@@ -10,6 +10,7 @@ import {
   useIsUserLoggedInStore,
   usePortraitImageStore,
   useUserIdStore,
+  useEmailStore,
 } from "@/store/userStore";
 import { setCookie } from "cookies-next";
 
@@ -58,6 +59,12 @@ export default function GoogleLoginButton() {
       useFullnameStore.getState().setFullname(user.fullname);
       const profilePic = user.profile_pic || ""; // Fallback to empty string or a default image URL
       usePortraitImageStore.getState().setPortraitImage(profilePic);
+      // Persist email for downstream flows (e.g., payments)
+      if (user.email) {
+        useEmailStore
+          .getState()
+          .setEmail(user.email?.toLowerCase?.() || user.email);
+      }
       toast("Success", {
         description: `Welcome, ${user.fullname}!`,
         style: { backgroundColor: "#22c55e", color: "white" },
