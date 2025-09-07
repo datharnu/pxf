@@ -68,7 +68,7 @@ export default function Signup() {
     <section className="min-h-screen bg-black flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h1 className="text-center text-3xl font-extrabold text-white">
-          Welcome to PXF
+          Welcome to MEMORIA
         </h1>
         <p className="mt-2 text-center text-sm text-gray-400">
           Create your account to get started
