@@ -4,7 +4,6 @@ import { getCookie, deleteCookie, setCookie } from "cookies-next";
 
 export const api = axios.create({
   baseURL: "https://pxfbackend.onrender.com/api/v1",
-  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
