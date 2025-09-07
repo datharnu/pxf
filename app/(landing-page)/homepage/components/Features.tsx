@@ -52,7 +52,7 @@ export default function Features() {
                   className="font-ghotic mt-8 md:mt-12 lg:mt-20 text-sm md:text-lg lg:text-xl text-[#FCFCFe] uppercase 
                                  flex items-center gap-2 lg:gap-5 
                                  bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500 
-                                 py-1 px-2 md:px-3 lg:px-4 md:py-1 lg:py-2 font-bold rounded-full"
+                                 py-1 px-2 md:px-3 lg:px-4 md:py-1 lg:py-2 font-bold rounded-full cursor-pointer"
                 >
                   Create Event
                   <FaCamera />
@@ -73,9 +73,9 @@ export default function Features() {
                     QR CODE TEMPLATES
                   </h1>
                   <p className="text-sm text-[#FCFCFE99] font-semibold tracking-widest">
-                    Each PXF event has a unique QR code that participants can
-                    scan to join. Choose between one of the pre-styled templates
-                    or design your own.
+                    Each Memoria event has a unique QR code that participants
+                    can scan to join. Choose between one of the pre-styled
+                    templates or design your own.
                   </p>
                 </div>
 
@@ -93,7 +93,7 @@ export default function Features() {
               </div>
             </div>
 
-            {/* PXF Sharing Blocks - Full width on mobile/tablet */}
+            {/* Memoria Sharing Blocks - Full width on mobile/tablet */}
             <div
               className="col-span-1 md:col-span-1 lg:col-start-4 lg:col-span-2 lg:row-start-4 lg:row-span-2 
                           relative h-[240px] md:h-[240px]
@@ -113,12 +113,12 @@ export default function Features() {
               {/* Text content with overlay */}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black to-transparent pt-10 pb-4 px-4 md:px-5">
                 <h1 className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">
-                  PXF SHARING BLOCKS
+                  MEMORIA SHARING BLOCKS
                 </h1>
                 <p className="text-sm text-[#FCFCFE99] font-semibold tracking-widest">
-                  The easiest way to share your PXF Camera with your guests.
+                  The easiest way to share your Memoria Camera with your guests.
                   Guests hold their phone over the block to magically pull up
-                  your event&apos;s PXF Camera.
+                  your event&apos;s Memoria Camera.
                 </p>
               </div>
             </div>

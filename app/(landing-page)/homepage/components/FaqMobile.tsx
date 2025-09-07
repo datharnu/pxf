@@ -11,17 +11,17 @@ const faqItems: FAQItem[] = [
   {
     question: "How is it possible guests don't have to download the app?",
     answer:
-      "PXF uses a technology called App Clips on iOS and Instant Apps on Android. App Clips and Instant Apps let others join your POV camera directly from a link or QR Code, without having to download an app from the App Store.",
+      "Guests can access MEMORIA directly through a link or QR code in their browser. There’s no need to download or install anything they simply click, join, and start uploading or viewing photos instantly.",
     icon: "/pov1.svg",
   },
   {
-    question: "Does POV work without internet?",
+    question: "Does MEMORIA work without internet?",
     answer:
-      "POV requires the internet (either WiFi or cellular data) to both access the experience and send in photos . For the vast majority of locations, this isn't an issue, but if you are using POV in an area that has spotty internet, we recommend testing it out at the venue beforehand.",
+      "MEMORIA requires the internet (either WiFi or cellular data) to both access the experience and send in photos . For the vast majority of locations, this isn't an issue, but if you are using MEMORIA in an area that has spotty internet, we recommend testing it out at the venue beforehand.",
     icon: "/pov2.svg",
   },
   {
-    question: "How much does POV cost?",
+    question: "How much does MEMORIA cost?",
     answer:
       "It's free for events with up to 10 participants. For larger events, we offer affordable premium plans with additional features. Check our pricing page for detailed information on all available plans.",
     icon: "/pov3.svg",
@@ -29,19 +29,19 @@ const faqItems: FAQItem[] = [
   {
     question: "How do I get a QR code?",
     answer:
-      "You can generate QR codes directly inside the app from your event dashboard. Simply create your event, navigate to sharing options, and select 'Generate QR Code'. You can then download and share it with your guests.",
+      "Once you create an event on our website, a unique QR code and link are automatically generated for you. You can easily download the QR code and share it with your guests, so they can join and upload their photos instantly.",
     icon: "/pov4.svg",
   },
   {
-    question: "Can i review photos ?",
+    question: "Can i review photos ? ",
     answer:
-      "Yes, you can review photos before the gallery goes live. You can do this by navigating to your event dashboard and selecting 'Review Photos'.",
+      "Not yet but a feature that is coming soon. We are working on a feature that will allow event hosts to review and approve photos before they are shared with guests. This will give you more control over the content shared at your event.",
     icon: "/pov5.svg",
   },
   {
     question: "Additional Questions?",
     answer:
-      "Feel free to contact our support team via the app or email us at support@povapp.com. We typically respond within 24 hours and are happy to help with any questions or concerns you might have.",
+      "Feel free to contact our support team via the app or email us at support@memoriaapp.com. We typically respond within 24 hours and are happy to help with any questions or concerns you might have.",
     icon: "/pov6.svg",
   },
 ];
@@ -52,8 +52,6 @@ const SingleFAQItem = ({ item }: { item: FAQItem }) => {
 
   return (
     <div className="relative mb-3 h-auto">
-      {" "}
-      {/* Container with proper margin */}
       <div
         className={`rounded-md border bg-[#FCFCFE1A] ${
           isOpen
@@ -87,7 +85,10 @@ const SingleFAQItem = ({ item }: { item: FAQItem }) => {
 // Main FAQ component with explicit item width control
 const FAQMOBILE = () => {
   return (
-    <div className="lg:hidden bg-primary  ">
+    <div className="lg:hidden bg-primary py-10  ">
+      <h1 className="text-2xl font-bold text-gray-200 mb-4 text-center">
+        FAQs
+      </h1>
       <div className="mx-4 md:mx-8 lg:mx-32 max-w-[90rem] ">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {faqItems.map((item, index) => (

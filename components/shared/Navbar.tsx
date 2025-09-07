@@ -55,7 +55,7 @@
 //           <div className="flex items-center gap-20">
 //             <div className="flex items-center">
 //               <Link href={"/"} className="text-xl font-bold">
-//                 PXF
+//                 Memoria
 //               </Link>
 //             </div>
 
@@ -137,7 +137,7 @@
 //                 href={"/"}
 //                 className="text-white font-bold text-xl tracking-wider"
 //               >
-//                 PXF
+//                 Memoria
 //               </Link>
 //               <button
 //                 onClick={toggleMenu}
@@ -324,7 +324,7 @@ export default function Navbar({
           <div className="flex items-center gap-20">
             <div className="flex items-center">
               <Link href={"/"} className="text-xl font-bold">
-                PXF
+                Memoria
               </Link>
             </div>
 
@@ -418,7 +418,7 @@ export default function Navbar({
                 href={"/"}
                 className="text-white font-bold text-xl tracking-wider"
               >
-                PXF
+                Memoria
               </Link>
               <button
                 onClick={toggleMenu}
