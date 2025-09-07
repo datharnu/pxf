@@ -45,6 +45,7 @@ import { SelectionActions } from "../components/SelectedAction";
 import { MediaActionsMenu } from "../components/MediaActionMenu";
 import { ShareModal } from "../components/ShareModal";
 import PhotobookComingSoon from "../components/PhotobookModal";
+import { isAuthenticated } from "@/app/utils/auth";
 
 // Add this interface for the my-uploads response
 interface MyUploadsResponse {
@@ -859,6 +860,11 @@ export default function EventSlugPage() {
   };
 
   const handleUploadClick = () => {
+    if (!isAuthenticated()) {
+      toast.error("Please sign in to upload photos");
+      router.push("/sign-in");
+      return;
+    }
     setShowUploadModal(true);
   };
 
