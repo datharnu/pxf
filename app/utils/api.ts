@@ -382,8 +382,18 @@ export const isValidUrl = (string: string): boolean => {
 // Utility function to validate date
 export const isValidFutureDate = (dateString: string): boolean => {
   const inputDate = new Date(dateString);
+  if (isNaN(inputDate.getTime())) return false;
+
+  // Compare by calendar day (local), allowing today
+  const inputDay = new Date(
+    inputDate.getFullYear(),
+    inputDate.getMonth(),
+    inputDate.getDate()
+  );
   const now = new Date();
-  return !isNaN(inputDate.getTime()) && inputDate > now;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  return inputDay.getTime() >= today.getTime();
 };
 
 // Generic authenticated API function

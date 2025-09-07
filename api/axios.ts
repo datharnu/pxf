@@ -4,6 +4,7 @@ import { getCookie, deleteCookie, setCookie } from "cookies-next";
 
 export const api = axios.create({
   baseURL: "https://pxfbackend.onrender.com/api/v1",
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -39,7 +40,8 @@ api.interceptors.response.use(
       originalRequest.url.includes("/auth/user") ||
       originalRequest.url.includes("/chats/conversations") ||
       originalRequest.url.includes("/messages") ||
-      originalRequest.url.includes("/events/access");
+      originalRequest.url.includes("/events/access") ||
+      originalRequest.url.includes("/media/event");
 
     // Skip token refresh for auth endpoints or if we're already checking token validity
     if (

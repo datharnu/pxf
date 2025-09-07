@@ -136,7 +136,7 @@ const StepFive: React.FC<StepFiveProps> = ({
           onChange={handleChange}
           className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-violet-600"
           required
-          min={new Date().toISOString().slice(0, 10)} // ensures only future dates
+          min={new Date().toLocaleDateString("en-CA")} // allow today; block past dates (uses local date)
         />
         {fieldErrors.eventDate && (
           <p className="text-red-400 text-sm mt-1">{fieldErrors.eventDate}</p>

@@ -447,7 +447,7 @@ const createEventSchema = z
     description: z
       .string()
       .min(10, "Description must be at least 10 characters"),
-    eventFlyer: z.string().url("Event Flyer must be a valid URL").optional(),
+    eventFlyer: z.string().url("Event Flyer must be a valid URL"),
     guestLimit: z.union([
       z.enum(["10", "100", "250", "500", "800", "1000+"]),
       z.literal("CUSTOM"),
@@ -511,7 +511,7 @@ const MultiStepForm: React.FC = () => {
   const [validation, setValidation] = useState<ValidationState>({
     title: false,
     description: false,
-    eventFlyer: true, // Optional field, starts as valid
+    eventFlyer: false,
     guestLimit: true, // Has default value
     photoCapLimit: true, // Has default value
     eventDate: false,
@@ -637,7 +637,7 @@ const MultiStepForm: React.FC = () => {
       case "description":
         return typeof value === "string" && value.trim().length >= 10;
       case "eventFlyer":
-        return value === "" || (typeof value === "string" && isValidUrl(value));
+        return typeof value === "string" && isValidUrl(value);
       case "guestLimit":
         return (
           typeof value === "string" &&
@@ -743,7 +743,38 @@ const MultiStepForm: React.FC = () => {
     e.preventDefault();
 
     if (!canGoToNextStep(currentStep)) {
-      setSubmitError("Please fill in all required fields correctly");
+      // Provide a more specific, user-friendly message per step
+      switch (currentStep) {
+        case 1:
+          setSubmitError("Title must be at least 3 characters");
+          break;
+        case 2:
+          setSubmitError("Description must be at least 10 characters");
+          break;
+        case 3:
+          setSubmitError("Event Flyer must be a valid URL");
+          break;
+        case 4:
+          setSubmitError(
+            validation.guestLimit === false
+              ? "Please select a valid guest limit"
+              : "Enter custom guest limit of 1001+ when selecting CUSTOM"
+          );
+          break;
+        case 5:
+          if (!validation.photoCapLimit) {
+            setSubmitError("Please select a valid photo cap limit");
+          } else if (!validation.eventDate) {
+            setSubmitError("Event Date must be a valid future date");
+          } else if (!validation.customPassword) {
+            setSubmitError("Custom Password must be at least 4 characters");
+          } else {
+            setSubmitError("Please review your entries for this step");
+          }
+          break;
+        default:
+          setSubmitError("Please check all fields and try again");
+      }
       return;
     }
 
@@ -768,14 +799,38 @@ const MultiStepForm: React.FC = () => {
     setFieldErrors({});
 
     try {
+      // Combine selected calendar date with the user's current local time
+      const buildDateTimeWithCurrentTime = (dateOnlyString: string): string => {
+        // Expecting YYYY-MM-DD from the input
+        const [yearStr, monthStr, dayStr] = dateOnlyString.split("-");
+        const now = new Date();
+        const year = Number(yearStr);
+        const monthIndex = Number(monthStr) - 1; // JS Date months are 0-based
+        const day = Number(dayStr);
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const seconds = now.getSeconds();
+        const millis = now.getMilliseconds();
+        const localDateTime = new Date(
+          year,
+          monthIndex,
+          day,
+          hours,
+          minutes,
+          seconds,
+          millis
+        );
+        // Send as ISO string so backend preserves exact point in time
+        return localDateTime.toISOString();
+      };
       // Base payload
       const payload: CreateEventPayload = {
         title: formData.title,
         description: formData.description,
-        eventFlyer: formData.eventFlyer || undefined,
+        eventFlyer: formData.eventFlyer,
         guestLimit: formData.guestLimit as GuestLimitOptions,
         photoCapLimit: formData.photoCapLimit as PhotoCapLimitOptions,
-        eventDate: formData.eventDate,
+        eventDate: buildDateTimeWithCurrentTime(formData.eventDate),
         isPasswordProtected: formData.isPasswordProtected,
         customPassword: formData.isPasswordProtected
           ? formData.customPassword
@@ -914,7 +969,10 @@ const MultiStepForm: React.FC = () => {
           }
         });
         setFieldErrors(errors);
-        setSubmitError("Please check all fields and try again");
+        // Surface the first validation error in the toast
+        const firstMessage =
+          error.errors[0]?.message ?? "Please check all fields and try again";
+        setSubmitError(firstMessage);
       } else if (error instanceof ApiError) {
         if (error.errors) {
           const errors: Record<string, string> = {};

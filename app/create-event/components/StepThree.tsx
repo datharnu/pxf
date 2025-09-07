@@ -346,7 +346,7 @@ const StepThree: React.FC<StepThreeProps> = ({
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold">Event Flyer</h1>
         <p className="text-[#FCFCFE99]">
-          Upload a flyer image that participants will see (optional)
+          Upload a flyer image that participants will see (required)
         </p>
       </div>
 

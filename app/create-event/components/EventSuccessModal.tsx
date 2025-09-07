@@ -186,7 +186,7 @@ export default function EventSuccessModal({
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-gray-900">
                 {isEdit
                   ? "  🎉 Event Updated Successfully!"
                   : "  🎉 Event Created Successfully!"}
