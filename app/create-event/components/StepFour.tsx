@@ -28,6 +28,7 @@ interface StepFourProps {
   handleChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
+  readOnly?: boolean;
   validation: {
     title: boolean;
     description: boolean;
@@ -46,6 +47,7 @@ interface StepFourProps {
 const StepFour: React.FC<StepFourProps> = ({
   formData,
   handleChange,
+  readOnly,
   validation,
   goToNextStep,
   fieldError,
@@ -63,6 +65,7 @@ const StepFour: React.FC<StepFourProps> = ({
   );
 
   const handleGuestSelect = (value: string) => {
+    if (readOnly) return;
     setSelectedGuest(value);
     handleChange({
       target: {
@@ -112,8 +115,9 @@ const StepFour: React.FC<StepFourProps> = ({
                 selectedGuest === opt
                   ? "bg-purple-600 text-white"
                   : "bg-gray-700 text-gray-400 hover:bg-gray-600"
-              }`}
+              } ${readOnly ? "opacity-60 cursor-not-allowed" : ""}`}
               onClick={() => handleGuestSelect(opt)}
+              disabled={!!readOnly}
             >
               {opt}
             </button>
@@ -134,6 +138,7 @@ const StepFour: React.FC<StepFourProps> = ({
                   .customGuestLimit ?? ""
               }
               onChange={handleChange}
+              disabled={!!readOnly}
               className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-violet-600"
               placeholder="e.g., 1500"
             />

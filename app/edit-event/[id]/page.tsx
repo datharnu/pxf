@@ -390,6 +390,7 @@ const EditEventForm: React.FC = () => {
           <StepFour
             formData={formData}
             handleChange={handleChange}
+            readOnly
             validation={validation}
             goToNextStep={goToNextStep}
             fieldError={fieldErrors.guestLimit}
