@@ -862,7 +862,11 @@ export default function EventSlugPage() {
   const handleUploadClick = () => {
     if (!isAuthenticated()) {
       toast.error("Please sign in to upload photos");
-      router.push("/sign-in");
+      const redirectTo =
+        typeof window !== "undefined"
+          ? `${window.location.pathname}${window.location.search}`
+          : "/";
+      router.push(`/sign-in?redirect=${encodeURIComponent(redirectTo)}`);
       return;
     }
     setShowUploadModal(true);

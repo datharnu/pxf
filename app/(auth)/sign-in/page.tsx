@@ -10,7 +10,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { api } from "@/api/axios";
 import { toast } from "sonner";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { setCookie } from "cookies-next";
 import {
   useUserIdStore,
@@ -32,6 +32,7 @@ type SignInFormData = z.infer<typeof signInSchema>;
 
 export default function SignIn() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -95,8 +96,9 @@ export default function SignIn() {
             duration: 3000,
           });
 
-          // Redirect to home
-          router.push("/");
+          // Redirect to provided destination or home
+          const redirectTo = searchParams.get("redirect") || "/";
+          router.push(redirectTo);
           return response.data;
         }
       } catch (error: any) {
@@ -139,7 +141,7 @@ export default function SignIn() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-black/15 py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 border border-gray-800">
           {/* Google Sign In */}
-          <div className="mt-6">
+          <div className="mt-6 flex justify-center">
             <GoogleLoginButton />
           </div>
 

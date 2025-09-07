@@ -63,7 +63,7 @@ export default function SectionWithCarousel() {
   };
 
   return (
-    <div className="bg-primary min-h-screen lg:min-h-fit bg-[url('/Footer.svg')] bg-contain bg-no-repeat lg:p-5 p-3">
+    <div className="bg-primary pb-10 lg:min-h-fit bg-[url('/Footer.svg')] bg-contain bg-no-repeat lg:p-5 p-3">
       <Navbar
         onJoinEvent={() => setShowQRScanner(true)}
         showJoinButton={true}

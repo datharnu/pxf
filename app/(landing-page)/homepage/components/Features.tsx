@@ -1,3 +1,4 @@
+"use client";
 import Image from "next/image";
 import React from "react";
 import Partners from "./Partners";
@@ -47,6 +48,7 @@ export default function Features() {
                   photos reveal, and more!
                 </p>
                 <button
+                  onClick={() => (window.location.href = "/create-event")}
                   className="font-ghotic mt-8 md:mt-12 lg:mt-20 text-sm md:text-lg lg:text-xl text-[#FCFCFe] uppercase 
                                  flex items-center gap-2 lg:gap-5 
                                  bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500 

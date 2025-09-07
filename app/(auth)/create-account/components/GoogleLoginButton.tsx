@@ -4,7 +4,7 @@ import React from "react";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   useFullnameStore,
   useIsUserLoggedInStore,
@@ -15,6 +15,7 @@ import { setCookie } from "cookies-next";
 
 export default function GoogleLoginButton() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleGoogleSignIn = async (credentialResponse: CredentialResponse) => {
     console.log("Full Google Response:", credentialResponse);
@@ -63,12 +64,9 @@ export default function GoogleLoginButton() {
         duration: 3000,
       });
 
-      // Redirect user based on profile completion
-      if (!user.dob) {
-        router.push("/profile");
-      } else {
-        router.push("/");
-      }
+      // Redirect destination: use ?redirect=/path if provided, else home
+      const redirectTo = searchParams.get("redirect") || "/";
+      router.push(redirectTo);
     } catch (error: unknown) {
       const err = error as AxiosError<{ message?: string }>;
       console.error("Google Sign-In Error:", err.response?.data || err);

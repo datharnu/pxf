@@ -82,19 +82,29 @@ const eventSlides = [
 
 export default function EventSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [previousSlide, setPreviousSlide] = useState<number | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleSelect = (index: number) => {
     setCurrentSlide(index);
   };
 
   const handleNext = () => {
-    setCurrentSlide((prev) => (prev + 1) % eventSlides.length);
+    setCurrentSlide((prev) => {
+      const next = (prev + 1) % eventSlides.length;
+      setPreviousSlide(prev);
+      setIsTransitioning(true);
+      return next;
+    });
   };
 
   const handlePrev = () => {
-    setCurrentSlide(
-      (prev) => (prev - 1 + eventSlides.length) % eventSlides.length
-    );
+    setCurrentSlide((prev) => {
+      const next = (prev - 1 + eventSlides.length) % eventSlides.length;
+      setPreviousSlide(prev);
+      setIsTransitioning(true);
+      return next;
+    });
   };
 
   // Auto-advance slide every 5 seconds
@@ -105,15 +115,54 @@ export default function EventSlider() {
     return () => clearInterval(interval);
   }, []);
 
+  // Kick off the fade-in for the current slide on next animation frame
+  useEffect(() => {
+    if (!isTransitioning) return;
+    const r1 = requestAnimationFrame(() => {
+      const r2 = requestAnimationFrame(() => {
+        setIsTransitioning(false);
+      });
+      return () => cancelAnimationFrame(r2);
+    });
+    return () => cancelAnimationFrame(r1);
+  }, [isTransitioning]);
+
+  // Preload all slide images once to minimize flashes during transitions
+  useEffect(() => {
+    eventSlides.forEach((slide) => {
+      const img = new Image();
+      img.src = slide.image;
+    });
+  }, []);
+
   const current = eventSlides[currentSlide];
 
   return (
     <section className="relative w-full h-screen text-white overflow-hidden">
-      {/* Blurred background image */}
-      <div
-        className="absolute inset-0 z-0 bg-cover bg-center blur-sm scale-110"
-        style={{ backgroundImage: `url(${current.image})` }}
-      />
+      {/* Crossfading blurred background images */}
+      <div className="absolute inset-0 z-0">
+        {previousSlide !== null && (
+          <div
+            className="absolute inset-0 bg-cover bg-center blur-sm scale-110 opacity-100 transition-opacity duration-700 ease-in-out"
+            style={{
+              backgroundImage: `url(${eventSlides[previousSlide].image})`,
+            }}
+          />
+        )}
+        <div
+          className={`absolute inset-0 bg-cover bg-center blur-sm scale-110 transition-opacity duration-700 ease-in-out ${
+            previousSlide !== null && isTransitioning
+              ? "opacity-0"
+              : "opacity-100"
+          }`}
+          style={{ backgroundImage: `url(${current.image})` }}
+          onTransitionEnd={() => {
+            // Clear previous slide after fade completes to stop stacking DOM nodes
+            if (!isTransitioning && previousSlide !== null)
+              setPreviousSlide(null);
+          }}
+        />
+      </div>
 
       {/* Black overlay extended up a bit more */}
       <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/80 via-black to-transparent z-0" />
@@ -123,11 +172,26 @@ export default function EventSlider() {
         <div className="z-10 flex gap-5 justify-center lg:gap-16 h-full px-4 md:px-16">
           {/* Phone Mockup */}
           <div className="">
-            <div className="lg:w-[270px] lg:h-[560px] w-[180px] h-[380px] rounded-[40px] overflow-hidden shadow-2xl border-[6px] border-black bg-black">
+            <div className="lg:w-[270px] lg:h-[560px] w-[180px] h-[380px] rounded-[40px] overflow-hidden shadow-2xl border-[6px] border-black bg-black relative">
+              {previousSlide !== null && (
+                <img
+                  src={eventSlides[previousSlide].image}
+                  alt={eventSlides[previousSlide].title}
+                  className="absolute inset-0 w-full h-full object-cover opacity-100 transition-opacity duration-700 ease-in-out"
+                />
+              )}
               <img
                 src={current.image}
                 alt={current.title}
-                className="w-full h-full object-cover"
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out ${
+                  previousSlide !== null && isTransitioning
+                    ? "opacity-0"
+                    : "opacity-100"
+                }`}
+                onTransitionEnd={() => {
+                  if (!isTransitioning && previousSlide !== null)
+                    setPreviousSlide(null);
+                }}
               />
             </div>
           </div>
