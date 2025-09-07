@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 import { api } from "@/api/axios";
@@ -30,7 +30,7 @@ const signInSchema = z.object({
 
 type SignInFormData = z.infer<typeof signInSchema>;
 
-export default function SignIn() {
+function SignInInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
@@ -297,5 +297,13 @@ export default function SignIn() {
         </div>
       </div>
     </section>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={<div className="text-gray-400">Loading…</div>}>
+      <SignInInner />
+    </Suspense>
   );
 }
