@@ -249,7 +249,7 @@ export default function Signup() {
           </div>
 
           {/* Google Sign In */}
-          <div className="mt-6">
+          <div className="mt-6 flex justify-center">
             <Suspense fallback={<div className="text-gray-400">Loading…</div>}>
               <GoogleLoginButton />
             </Suspense>
