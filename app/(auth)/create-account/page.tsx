@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import GoogleLoginButton from "./components/GoogleLoginButton";
 import { api } from "@/api/axios";
@@ -250,7 +250,9 @@ export default function Signup() {
 
           {/* Google Sign In */}
           <div className="mt-6">
-            <GoogleLoginButton />
+            <Suspense fallback={<div className="text-gray-400">Loading…</div>}>
+              <GoogleLoginButton />
+            </Suspense>
           </div>
 
           {/* Terms and Privacy */}
