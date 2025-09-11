@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { isAdminUser, getUserRole } from "@/app/utils/admin";
 
 interface AdminRouteGuardProps {
@@ -69,7 +70,8 @@ export default function AdminRouteGuard({
               Access Denied
             </h1>
             <p className="text-gray-400 mb-6">
-              You don't have the required admin privileges to access this page.
+              You don&apos;t have the required admin privileges to access this
+              page.
             </p>
             <div className="space-y-3">
               <button
@@ -93,4 +95,3 @@ export default function AdminRouteGuard({
 
   return <>{children}</>;
 }
-
