@@ -7,3 +7,4 @@ export default function AdminLayout({
 }) {
   return <AdminRouteGuard>{children}</AdminRouteGuard>;
 }
+
