@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -45,9 +47,13 @@ export const FaceStatsDashboard: React.FC<FaceStatsDashboardProps> = ({
       } else {
         throw new Error(result.message || "Failed to load face statistics");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load face stats:", error);
-      setError(error.message || "Failed to load face statistics");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to load face statistics"
+      );
     } finally {
       setLoading(false);
     }
@@ -69,9 +75,13 @@ export const FaceStatsDashboard: React.FC<FaceStatsDashboardProps> = ({
           result.message || "Failed to retrain face identification"
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to retrain face identification:", error);
-      toast.error(error.message || "Failed to retrain face identification");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to retrain face identification"
+      );
     } finally {
       setRetraining(false);
     }
