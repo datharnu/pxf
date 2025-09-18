@@ -11,17 +11,17 @@ const faqItems: FAQItem[] = [
   {
     question: "How is it possible guests don't have to download the app?",
     answer:
-      "Guests can access MEMORIA directly through a link or QR code in their browser. There’s no need to download or install anything they simply click, join, and start uploading or viewing photos instantly.",
+      "Guests can access PXF directly through a link or QR code in their browser. There’s no need to download or install anything they simply click, join, and start uploading or viewing photos instantly.",
     icon: "/pov1.svg",
   },
   {
-    question: "Does MEMORIA work without internet?",
+    question: "Does PXF work without internet?",
     answer:
-      "MEMORIA requires the internet (either WiFi or cellular data) to both access the experience and send in photos . For the vast majority of locations, this isn't an issue, but if you are using MEMORIA in an area that has spotty internet, we recommend testing it out at the venue beforehand.",
+      "PXF requires the internet (either WiFi or cellular data) to both access the experience and send in photos . For the vast majority of locations, this isn't an issue, but if you are using PXF in an area that has spotty internet, we recommend testing it out at the venue beforehand.",
     icon: "/pov2.svg",
   },
   {
-    question: "How much does MEMORIA cost?",
+    question: "How much does PXF cost?",
     answer:
       "It's free for events with up to 10 participants. For larger events, we offer affordable premium plans with additional features. Check our pricing page for detailed information on all available plans.",
     icon: "/pov3.svg",
@@ -41,7 +41,7 @@ const faqItems: FAQItem[] = [
   {
     question: "Additional Questions?",
     answer:
-      "Feel free to contact our support team via the app or email us at support@memoriaapp.com. We typically respond within 24 hours and are happy to help with any questions or concerns you might have.",
+      "Feel free to contact our support team via the app or email us at support@PXFapp.com. We typically respond within 24 hours and are happy to help with any questions or concerns you might have.",
     icon: "/pov6.svg",
   },
 ];

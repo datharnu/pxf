@@ -241,6 +241,14 @@ export function UploadModal({
       if (submitResponse.success) {
         setUploadStatus("success");
 
+        // Check if face processing is happening
+        if (submitResponse.faceProcessing) {
+          console.log(
+            `Face processing: ${submitResponse.faceProcessing.imagesProcessed} images processed`
+          );
+          console.log(`Status: ${submitResponse.faceProcessing.status}`);
+        }
+
         // Refresh the stats
         await refetchStats();
         setOptimisticRemaining(null);
@@ -358,11 +366,28 @@ export function UploadModal({
           )}
 
           {uploadStatus === "success" && (
-            <div className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-              <p className="text-sm text-green-300">
-                Upload completed successfully!
-              </p>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                <p className="text-sm text-green-300">
+                  Upload completed successfully!
+                </p>
+              </div>
+
+              {/* Face Processing Status */}
+              <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                </div>
+                <div>
+                  <p className="text-sm text-blue-300 font-medium">
+                    Face detection in progress
+                  </p>
+                  <p className="text-xs text-blue-400">
+                    Your photos are being analyzed for face detection
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 

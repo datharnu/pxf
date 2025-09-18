@@ -73,9 +73,9 @@ export default function Features() {
                     QR CODE TEMPLATES
                   </h1>
                   <p className="text-sm text-[#FCFCFE99] font-semibold tracking-widest">
-                    Each Memoria event has a unique QR code that participants
-                    can scan to join. Choose between one of the pre-styled
-                    templates or design your own.
+                    Each PXF event has a unique QR code that participants can
+                    scan to join. Choose between one of the pre-styled templates
+                    or design your own.
                   </p>
                 </div>
 
@@ -93,7 +93,7 @@ export default function Features() {
               </div>
             </div>
 
-            {/* Memoria Sharing Blocks - Full width on mobile/tablet */}
+            {/* PXF Sharing Blocks - Full width on mobile/tablet */}
             <div
               className="col-span-1 md:col-span-1 lg:col-start-4 lg:col-span-2 lg:row-start-4 lg:row-span-2 
                           relative h-[240px] md:h-[240px]
@@ -113,12 +113,12 @@ export default function Features() {
               {/* Text content with overlay */}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black to-transparent pt-10 pb-4 px-4 md:px-5">
                 <h1 className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">
-                  MEMORIA SHARING BLOCKS
+                  PXF SHARING BLOCKS
                 </h1>
                 <p className="text-sm text-[#FCFCFE99] font-semibold tracking-widest">
-                  The easiest way to share your Memoria Camera with your guests.
+                  The easiest way to share your PXF Camera with your guests.
                   Guests hold their phone over the block to magically pull up
-                  your event&apos;s Memoria Camera.
+                  your event&apos;s PXF Camera.
                 </p>
               </div>
             </div>

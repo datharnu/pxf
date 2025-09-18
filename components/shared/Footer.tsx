@@ -30,7 +30,7 @@ export default function ModernFooter() {
                 <Camera className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
-                MEMORIA Events
+                PXF Events
               </span>
             </div>
             <p className="text-gray-300 text-sm mb-6">
@@ -93,10 +93,10 @@ export default function ModernFooter() {
               <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4 text-amber-400" />
                 <a
-                  href="mailto:hello@memoria.com"
+                  href="mailto:hello@PXF.com"
                   className="text-gray-300 hover:text-white transition-colors text-sm"
                 >
-                  hello@memoria.com
+                  hello@PXF.com
                 </a>
               </div>
               <div className="flex items-center space-x-2">

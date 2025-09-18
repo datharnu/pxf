@@ -606,3 +606,198 @@ export const verifyPrecreatePayment = async (
     `/payments/verify-precreate/${encodeURIComponent(reference)}`
   );
 };
+
+// Face API Integration
+export interface FaceEnrollmentRequest {
+  mediaId: string;
+}
+
+export interface FaceEnrollmentResponse {
+  success: boolean;
+  message: string;
+  faceProfile?: {
+    id: string;
+    userId: string;
+    eventId: string;
+    enrollmentConfidence: number;
+    faceAttributes?: any;
+    createdAt: string;
+  };
+  trainingStatus?: string;
+}
+
+export interface FaceProfileResponse {
+  success: boolean;
+  message: string;
+  faceProfile?: {
+    id: string;
+    userId: string;
+    eventId: string;
+    enrollmentConfidence: number;
+    faceAttributes?: any;
+    createdAt: string;
+  };
+}
+
+export interface FaceDetectionStatsResponse {
+  success: boolean;
+  message: string;
+  stats: {
+    totalFacesDetected: number;
+    totalFacesIdentified: number;
+    totalUsersEnrolled: number;
+    identificationAccuracy: number;
+    lastTrainingDate?: string;
+    trainingStatus: "not_started" | "running" | "succeeded" | "failed";
+  };
+}
+
+export interface FilteredMediaResponse {
+  success: boolean;
+  message: string;
+  media: Array<{
+    id: string;
+    mediaUrl: string;
+    fileName: string;
+    mediaType: "image" | "video";
+    createdAt: string;
+    faceDetections: Array<{
+      id: string;
+      faceId: string;
+      faceRectangle: any;
+      confidence: number;
+      isIdentified: boolean;
+      identifiedUserId?: string;
+      faceAttributes?: any;
+      createdAt: string;
+    }>;
+  }>;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// Face API Functions
+export const enrollUserFace = async (
+  eventId: string,
+  request: FaceEnrollmentRequest
+): Promise<FaceEnrollmentResponse> => {
+  return authenticatedApiCall<FaceEnrollmentResponse>(
+    `/faces/events/${eventId}/enroll`,
+    {
+      method: "POST",
+      data: request,
+    }
+  );
+};
+
+export const getUserFaceProfile = async (
+  eventId: string
+): Promise<FaceProfileResponse> => {
+  return authenticatedApiCall<FaceProfileResponse>(
+    `/faces/events/${eventId}/profile`
+  );
+};
+
+export const deleteUserFaceProfile = async (
+  eventId: string
+): Promise<{
+  success: boolean;
+  message: string;
+}> => {
+  return authenticatedApiCall<{ success: boolean; message: string }>(
+    `/faces/events/${eventId}/profile`,
+    {
+      method: "DELETE",
+    }
+  );
+};
+
+export const getFaceDetectionStats = async (
+  eventId: string
+): Promise<FaceDetectionStatsResponse> => {
+  return authenticatedApiCall<FaceDetectionStatsResponse>(
+    `/faces/events/${eventId}/stats`
+  );
+};
+
+export const getEventFaceProfiles = async (
+  eventId: string,
+  page: number = 1,
+  limit: number = 20
+): Promise<{
+  success: boolean;
+  message: string;
+  profiles: any[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}> => {
+  return authenticatedApiCall(
+    `/faces/events/${eventId}/profiles?page=${page}&limit=${limit}`
+  );
+};
+
+export const getMediaFaceDetections = async (
+  mediaId: string
+): Promise<{
+  success: boolean;
+  message: string;
+  faceDetections: any[];
+}> => {
+  return authenticatedApiCall(`/faces/media/${mediaId}/faces`);
+};
+
+export const getMediaWithUserFace = async (
+  eventId: string,
+  page: number = 1,
+  limit: number = 20
+): Promise<FilteredMediaResponse> => {
+  return authenticatedApiCall<FilteredMediaResponse>(
+    `/media/event/${eventId}/my-faces?page=${page}&limit=${limit}`
+  );
+};
+
+export const getAllFaceDetections = async (
+  eventId: string,
+  page: number = 1,
+  limit: number = 20
+): Promise<FilteredMediaResponse> => {
+  return authenticatedApiCall<FilteredMediaResponse>(
+    `/media/event/${eventId}/face-detections?page=${page}&limit=${limit}`
+  );
+};
+
+export const getFaceStatistics = async (
+  eventId: string
+): Promise<{
+  success: boolean;
+  message: string;
+  stats: {
+    totalMediaWithFaces: number;
+    totalFacesDetected: number;
+    totalFacesIdentified: number;
+    averageFacesPerImage: number;
+    identificationRate: number;
+  };
+}> => {
+  return authenticatedApiCall(`/media/event/${eventId}/face-stats`);
+};
+
+export const retrainFaceIdentification = async (
+  eventId: string
+): Promise<{
+  success: boolean;
+  message: string;
+  trainingStatus: string;
+}> => {
+  return authenticatedApiCall(`/media/event/${eventId}/retrain-faces`, {
+    method: "POST",
+  });
+};

@@ -46,6 +46,8 @@ import { MediaActionsMenu } from "../components/MediaActionMenu";
 import { ShareModal } from "../components/ShareModal";
 import PhotobookComingSoon from "../components/PhotobookModal";
 import { isAuthenticated } from "@/app/utils/auth";
+import { MyFacesView } from "../components/MyFacesView";
+import { FaceStatus } from "../components/FaceStatus";
 
 // Add this interface for the my-uploads response
 interface MyUploadsResponse {
@@ -471,6 +473,7 @@ export default function EventSlugPage() {
   const [shareMedia, setShareMedia] = useState<MediaItem[]>([]);
   const [previewMedia, setPreviewMedia] = useState<MediaItem | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [hasFaceProfile, setHasFaceProfile] = useState<boolean | null>(null);
 
   // Local storage helpers for remembering event password per slug
   const getStoredEventPassword = (eventSlug: string | null | undefined) => {
@@ -1036,6 +1039,47 @@ export default function EventSlugPage() {
     }
   };
 
+  // Render content based on active filter
+  const renderContent = () => {
+    if (!eventData) return null;
+
+    if (activeFilter === "my" && hasFaceProfile === false) {
+      // Show face enrollment if no face profile exists
+      return (
+        <div className="space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-zinc-50 mb-2">My PXF</h2>
+            <p className="text-zinc-400">Photos with Your Face</p>
+          </div>
+          <FaceStatus
+            eventId={eventData.id}
+            onStatusChange={setHasFaceProfile}
+          />
+        </div>
+      );
+    } else if (activeFilter === "my" && hasFaceProfile === true) {
+      // Show face-detected photos
+      return <MyFacesView eventId={eventData.id} />;
+    } else if (activeFilter === "my") {
+      // Show regular my uploads while checking face profile
+      return (
+        <div className="space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-zinc-50 mb-2">My PXF</h2>
+            <p className="text-zinc-400">Photos with Your Face</p>
+          </div>
+          <FaceStatus
+            eventId={eventData.id}
+            onStatusChange={setHasFaceProfile}
+          />
+        </div>
+      );
+    }
+
+    // Default content for other tabs
+    return null;
+  };
+
   // Determine which media to display based on active filter
   const displayMedia =
     activeFilter === "my" && myUploadsData
@@ -1447,305 +1491,317 @@ export default function EventSlugPage() {
 
           {/* Media Gallery Section */}
           <div className="px-4 md:px-6 lg:px-8 pb-24">
-            {/* Gallery Header */}
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-zinc-50">
-                  Event Gallery {activeFilter === "my" ? "(My Uploads)" : ""}
-                </h2>
-                <p className="text-zinc-400 text-sm">
-                  {mediaLoading
-                    ? "Loading..."
-                    : `${displayStats.totalPhotos} photos, ${displayStats.totalVideos} videos`}
-                </p>
-              </div>
+            {/* Face Detection Content */}
+            {activeFilter === "my" ? (
+              renderContent()
+            ) : (
+              <>
+                {/* Gallery Header */}
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-zinc-50">
+                      Event Gallery{" "}
+                      {activeFilter === "my" ? "(My Uploads)" : ""}
+                    </h2>
+                    <p className="text-zinc-400 text-sm">
+                      {mediaLoading
+                        ? "Loading..."
+                        : `${displayStats.totalPhotos} photos, ${displayStats.totalVideos} videos`}
+                    </p>
+                  </div>
 
-              {/* View Toggle */}
-              <div className="flex items-center gap-2 bg-zinc-800/50 rounded-lg p-1">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-md transition-all duration-200 ${
-                    viewMode === "grid"
-                      ? "bg-amber-500 text-zinc-900"
-                      : "text-zinc-400 hover:text-zinc-200"
-                  }`}
-                >
-                  <Grid3X3 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`p-2 rounded-md transition-all duration-200 ${
-                    viewMode === "list"
-                      ? "bg-amber-500 text-zinc-900"
-                      : "text-zinc-400 hover:text-zinc-200"
-                  }`}
-                >
-                  <List className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Loading State */}
-            {mediaLoading && (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-                <span className="ml-3 text-zinc-300">Loading media...</span>
-              </div>
-            )}
-
-            {/* Empty State */}
-            {!mediaLoading && displayMedia.length === 0 && (
-              <div className="text-center py-16">
-                <div className="w-20 h-20 mx-auto mb-6 bg-zinc-800/50 rounded-2xl flex items-center justify-center">
-                  <Camera className="w-10 h-10 text-zinc-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-zinc-300 mb-2">
-                  {activeFilter === "my" ? "No uploads yet" : "No media yet"}
-                </h3>
-                <p className="text-zinc-500 mb-6 max-w-md mx-auto">
-                  {activeFilter === "my"
-                    ? "You haven't uploaded any media to this event yet. Upload your photos and videos to get started!"
-                    : "Be the first to share memories from this event. Upload your photos and videos to get started!"}
-                </p>
-                <button
-                  onClick={handleUploadClick}
-                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 px-6 py-3 rounded-xl text-zinc-900 font-semibold transition-all duration-200 transform hover:scale-105"
-                >
-                  Upload Media
-                </button>
-              </div>
-            )}
-
-            {/* Grid View */}
-            {!mediaLoading &&
-              displayMedia.length > 0 &&
-              viewMode === "grid" && (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {displayMedia.map((media) => (
-                    <div
-                      key={media.id}
-                      className={`group relative aspect-square bg-zinc-800/30 rounded-xl overflow-hidden border transition-all duration-200 cursor-pointer ${
-                        isMediaSelected(media.id)
-                          ? "border-amber-500/50 ring-2 ring-amber-500/30"
-                          : "border-zinc-700/30 hover:border-amber-500/30"
+                  {/* View Toggle */}
+                  <div className="flex items-center gap-2 bg-zinc-800/50 rounded-lg p-1">
+                    <button
+                      onClick={() => setViewMode("grid")}
+                      className={`p-2 rounded-md transition-all duration-200 ${
+                        viewMode === "grid"
+                          ? "bg-amber-500 text-zinc-900"
+                          : "text-zinc-400 hover:text-zinc-200"
                       }`}
-                      onClick={() => toggleMediaSelection(media)}
                     >
-                      {/* Selection indicator */}
-                      {isMediaSelected(media.id) && (
-                        <div className="absolute top-3 left-3 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center z-10">
-                          <Check className="w-4 h-4 text-zinc-900" />
-                        </div>
-                      )}
+                      <Grid3X3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={`p-2 rounded-md transition-all duration-200 ${
+                        viewMode === "list"
+                          ? "bg-amber-500 text-zinc-900"
+                          : "text-zinc-400 hover:text-zinc-200"
+                      }`}
+                    >
+                      <List className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
 
-                      {/* Media Content */}
-                      {isVideo(media.mimeType) ? (
-                        <div className="relative w-full h-full">
-                          <video
-                            src={media.mediaUrl}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            preload="metadata"
-                          />
-                          {/* Video play button overlay */}
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-12 h-12 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
-                              <Play className="w-6 h-6 text-white ml-1" />
-                            </div>
-                          </div>
-                          {/* Video indicator */}
-                          <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm rounded-full p-1">
-                            <Video className="w-4 h-4 text-white" />
-                          </div>
-                        </div>
-                      ) : (
-                        <Image
-                          src={media.mediaUrl}
-                          alt={media.fileName}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      )}
+                {/* Loading State */}
+                {mediaLoading && (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+                    <span className="ml-3 text-zinc-300">Loading media...</span>
+                  </div>
+                )}
 
-                      {/* Overlay: always visible on mobile/tablet, hover on large screens */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/60 via-transparent to-transparent opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-200">
-                        <div className="absolute bottom-3 left-3 right-3">
-                          <p className="text-white text-sm font-medium truncate mb-1">
-                            {media.fileName}
-                          </p>
-                          <div className="flex justify-between items-center text-xs text-zinc-300">
-                            <span>
-                              {media.uploader ? media.uploader.fullname : "You"}
-                            </span>
-                            <span>{formatFileSize(media.fileSize)}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Actions menu button: always visible on mobile/tablet, hover on large screens */}
-                      <div className="absolute top-3 right-3">
-                        <button
-                          onClick={(e) => toggleMenu(media.id, e)}
-                          className="bg-zinc-900/70 backdrop-blur-sm rounded-full p-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 hover:bg-zinc-800/90"
-                        >
-                          <MoreVertical className="w-4 h-4 text-white" />
-                        </button>
-
-                        {/* Actions Menu */}
-                        <MediaActionsMenu
-                          media={media}
-                          isOpen={activeMenuId === media.id}
-                          onClose={closeMenu}
-                          onDownload={() => {
-                            downloadSingleMedia(media);
-                            closeMenu();
-                          }}
-                          onShare={() => {
-                            handleShare([media]);
-                            closeMenu();
-                          }}
-                          onPreview={() => {
-                            handlePreview(media);
-                            closeMenu();
-                          }}
-                          onDeleteSuccess={() => {
-                            // Refresh the media data after deletion
-                            if (activeFilter === "all") {
-                              fetchEventMedia(eventData.id);
-                            } else {
-                              fetchMyUploads(eventData.id);
-                            }
-                          }}
-                        />
-                      </div>
+                {/* Empty State */}
+                {!mediaLoading && displayMedia.length === 0 && (
+                  <div className="text-center py-16">
+                    <div className="w-20 h-20 mx-auto mb-6 bg-zinc-800/50 rounded-2xl flex items-center justify-center">
+                      <Camera className="w-10 h-10 text-zinc-600" />
                     </div>
-                  ))}
-                </div>
-              )}
-
-            {/* List View */}
-            {!mediaLoading &&
-              displayMedia.length > 0 &&
-              viewMode === "list" && (
-                <div className="space-y-3">
-                  {displayMedia.map((media) => (
-                    <div
-                      key={media.id}
-                      className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
-                        isMediaSelected(media.id)
-                          ? "bg-zinc-800/50 border-amber-500/50"
-                          : "bg-zinc-800/30 border-zinc-700/30 hover:border-amber-500/30"
-                      }`}
-                      onClick={() => toggleMediaSelection(media)}
+                    <h3 className="text-xl font-semibold text-zinc-300 mb-2">
+                      {activeFilter === "my"
+                        ? "No uploads yet"
+                        : "No media yet"}
+                    </h3>
+                    <p className="text-zinc-500 mb-6 max-w-md mx-auto">
+                      {activeFilter === "my"
+                        ? "You haven't uploaded any media to this event yet. Upload your photos and videos to get started!"
+                        : "Be the first to share memories from this event. Upload your photos and videos to get started!"}
+                    </p>
+                    <button
+                      onClick={handleUploadClick}
+                      className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 px-6 py-3 rounded-xl text-zinc-900 font-semibold transition-all duration-200 transform hover:scale-105"
                     >
-                      {/* Selection checkbox */}
-                      <div
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                          isMediaSelected(media.id)
-                            ? "bg-amber-500 border-amber-500"
-                            : "border-zinc-600 hover:border-amber-500"
-                        }`}
-                      >
-                        {isMediaSelected(media.id) && (
-                          <Check className="w-3 h-3 text-zinc-900" />
-                        )}
-                      </div>
+                      Upload Media
+                    </button>
+                  </div>
+                )}
 
-                      {/* Thumbnail */}
-                      <div className="relative w-16 h-16 bg-zinc-700/50 rounded-lg overflow-hidden flex-shrink-0">
-                        {isVideo(media.mimeType) ? (
-                          <div className="relative w-full h-full">
-                            <video
+                {/* Grid View */}
+                {!mediaLoading &&
+                  displayMedia.length > 0 &&
+                  viewMode === "grid" && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                      {displayMedia.map((media) => (
+                        <div
+                          key={media.id}
+                          className={`group relative aspect-square bg-zinc-800/30 rounded-xl overflow-hidden border transition-all duration-200 cursor-pointer ${
+                            isMediaSelected(media.id)
+                              ? "border-amber-500/50 ring-2 ring-amber-500/30"
+                              : "border-zinc-700/30 hover:border-amber-500/30"
+                          }`}
+                          onClick={() => toggleMediaSelection(media)}
+                        >
+                          {/* Selection indicator */}
+                          {isMediaSelected(media.id) && (
+                            <div className="absolute top-3 left-3 w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center z-10">
+                              <Check className="w-4 h-4 text-zinc-900" />
+                            </div>
+                          )}
+
+                          {/* Media Content */}
+                          {isVideo(media.mimeType) ? (
+                            <div className="relative w-full h-full">
+                              <video
+                                src={media.mediaUrl}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                preload="metadata"
+                              />
+                              {/* Video play button overlay */}
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-12 h-12 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
+                                  <Play className="w-6 h-6 text-white ml-1" />
+                                </div>
+                              </div>
+                              {/* Video indicator */}
+                              <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm rounded-full p-1">
+                                <Video className="w-4 h-4 text-white" />
+                              </div>
+                            </div>
+                          ) : (
+                            <Image
                               src={media.mediaUrl}
-                              className="w-full h-full object-cover"
-                              preload="metadata"
+                              alt={media.fileName}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-300"
                             />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="w-6 h-6 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
-                                <Play className="w-3 h-3 text-white ml-0.5" />
+                          )}
+
+                          {/* Overlay: always visible on mobile/tablet, hover on large screens */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/60 via-transparent to-transparent opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-200">
+                            <div className="absolute bottom-3 left-3 right-3">
+                              <p className="text-white text-sm font-medium truncate mb-1">
+                                {media.fileName}
+                              </p>
+                              <div className="flex justify-between items-center text-xs text-zinc-300">
+                                <span>
+                                  {media.uploader
+                                    ? media.uploader.fullname
+                                    : "You"}
+                                </span>
+                                <span>{formatFileSize(media.fileSize)}</span>
                               </div>
                             </div>
                           </div>
-                        ) : (
-                          <Image
-                            src={media.mediaUrl}
-                            alt={media.fileName}
-                            fill
-                            className="object-cover"
-                          />
-                        )}
-                      </div>
 
-                      {/* Media Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-medium text-zinc-200 truncate">
-                            {media.fileName}
-                          </h4>
-                          {isVideo(media.mimeType) && (
-                            <div className="bg-zinc-700 rounded-full p-1">
-                              <Video className="w-3 h-3 text-zinc-400" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-zinc-400">
-                          {/* <span>{media.uploader.fullname}</span>
-                          <span>{formatFileSize(media.fileSize)}</span> */}
-                          <span>
-                            {new Date(media.createdAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
+                          {/* Actions menu button: always visible on mobile/tablet, hover on large screens */}
+                          <div className="absolute top-3 right-3">
+                            <button
+                              onClick={(e) => toggleMenu(media.id, e)}
+                              className="bg-zinc-900/70 backdrop-blur-sm rounded-full p-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 hover:bg-zinc-800/90"
+                            >
+                              <MoreVertical className="w-4 h-4 text-white" />
+                            </button>
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            downloadSingleMedia(media);
-                          }}
-                          className="p-2 text-zinc-400 hover:text-amber-400 hover:bg-zinc-700/50 rounded-lg transition-all duration-200"
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleShare([media]);
-                          }}
-                          className="p-2 text-zinc-400 hover:text-amber-400 hover:bg-zinc-700/50 rounded-lg transition-all duration-200"
-                        >
-                          <Share2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                            {/* Actions Menu */}
+                            <MediaActionsMenu
+                              media={media}
+                              isOpen={activeMenuId === media.id}
+                              onClose={closeMenu}
+                              onDownload={() => {
+                                downloadSingleMedia(media);
+                                closeMenu();
+                              }}
+                              onShare={() => {
+                                handleShare([media]);
+                                closeMenu();
+                              }}
+                              onPreview={() => {
+                                handlePreview(media);
+                                closeMenu();
+                              }}
+                              onDeleteSuccess={() => {
+                                // Refresh the media data after deletion
+                                if (activeFilter === "all") {
+                                  fetchEventMedia(eventData.id);
+                                } else {
+                                  fetchMyUploads(eventData.id);
+                                }
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-
-            {/* Load More Button */}
-            {hasMorePages && activeFilter === "all" && (
-              <div className="text-center mt-8">
-                <button
-                  onClick={loadMoreMedia}
-                  disabled={mediaLoading}
-                  className="bg-zinc-800/50 hover:bg-zinc-700/50 backdrop-blur-sm px-6 py-3 rounded-xl text-zinc-200 font-medium border border-zinc-700/50 transition-all duration-200 hover:border-zinc-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {mediaLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
-                      Loading...
-                    </>
-                  ) : (
-                    <>
-                      Load More Media
-                      <span className="ml-2 text-zinc-400">
-                        ({currentPage} of{" "}
-                        {mediaData?.pagination?.totalPages || 1})
-                      </span>
-                    </>
                   )}
-                </button>
-              </div>
+
+                {/* List View */}
+                {!mediaLoading &&
+                  displayMedia.length > 0 &&
+                  viewMode === "list" && (
+                    <div className="space-y-3">
+                      {displayMedia.map((media) => (
+                        <div
+                          key={media.id}
+                          className={`flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
+                            isMediaSelected(media.id)
+                              ? "bg-zinc-800/50 border-amber-500/50"
+                              : "bg-zinc-800/30 border-zinc-700/30 hover:border-amber-500/30"
+                          }`}
+                          onClick={() => toggleMediaSelection(media)}
+                        >
+                          {/* Selection checkbox */}
+                          <div
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                              isMediaSelected(media.id)
+                                ? "bg-amber-500 border-amber-500"
+                                : "border-zinc-600 hover:border-amber-500"
+                            }`}
+                          >
+                            {isMediaSelected(media.id) && (
+                              <Check className="w-3 h-3 text-zinc-900" />
+                            )}
+                          </div>
+
+                          {/* Thumbnail */}
+                          <div className="relative w-16 h-16 bg-zinc-700/50 rounded-lg overflow-hidden flex-shrink-0">
+                            {isVideo(media.mimeType) ? (
+                              <div className="relative w-full h-full">
+                                <video
+                                  src={media.mediaUrl}
+                                  className="w-full h-full object-cover"
+                                  preload="metadata"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="w-6 h-6 bg-black/60 backdrop-blur-sm rounded-full flex items-center justify-center">
+                                    <Play className="w-3 h-3 text-white ml-0.5" />
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <Image
+                                src={media.mediaUrl}
+                                alt={media.fileName}
+                                fill
+                                className="object-cover"
+                              />
+                            )}
+                          </div>
+
+                          {/* Media Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-medium text-zinc-200 truncate">
+                                {media.fileName}
+                              </h4>
+                              {isVideo(media.mimeType) && (
+                                <div className="bg-zinc-700 rounded-full p-1">
+                                  <Video className="w-3 h-3 text-zinc-400" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-zinc-400">
+                              {/* <span>{media.uploader.fullname}</span>
+                          <span>{formatFileSize(media.fileSize)}</span> */}
+                              <span>
+                                {new Date(media.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                downloadSingleMedia(media);
+                              }}
+                              className="p-2 text-zinc-400 hover:text-amber-400 hover:bg-zinc-700/50 rounded-lg transition-all duration-200"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleShare([media]);
+                              }}
+                              className="p-2 text-zinc-400 hover:text-amber-400 hover:bg-zinc-700/50 rounded-lg transition-all duration-200"
+                            >
+                              <Share2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                {/* Load More Button */}
+                {hasMorePages && activeFilter === "all" && (
+                  <div className="text-center mt-8">
+                    <button
+                      onClick={loadMoreMedia}
+                      disabled={mediaLoading}
+                      className="bg-zinc-800/50 hover:bg-zinc-700/50 backdrop-blur-sm px-6 py-3 rounded-xl text-zinc-200 font-medium border border-zinc-700/50 transition-all duration-200 hover:border-zinc-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {mediaLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          Load More Media
+                          <span className="ml-2 text-zinc-400">
+                            ({currentPage} of{" "}
+                            {mediaData?.pagination?.totalPages || 1})
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
