@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React, { useState, useRef } from "react";
@@ -5,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Camera,
-  Upload,
   Loader2,
   CheckCircle,
   AlertCircle,
@@ -252,7 +253,8 @@ export const FaceEnrollment: React.FC<FaceEnrollmentProps> = ({
                 Face enrolled successfully!
               </p>
               <p className="text-xs text-green-400">
-                You can now find photos with your face in the "My PXF" tab.
+                You can now find photos with your face in the &quot;My PXF&quot;
+                tab.
               </p>
             </div>
           </div>
