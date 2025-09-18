@@ -620,7 +620,7 @@ export interface FaceEnrollmentResponse {
     userId: string;
     eventId: string;
     enrollmentConfidence: number;
-    faceAttributes?: any;
+    faceAttributes?: Record<string, unknown>;
     createdAt: string;
   };
   trainingStatus?: string;
@@ -634,7 +634,7 @@ export interface FaceProfileResponse {
     userId: string;
     eventId: string;
     enrollmentConfidence: number;
-    faceAttributes?: any;
+    faceAttributes?: Record<string, unknown>;
     createdAt: string;
   };
 }
@@ -664,11 +664,16 @@ export interface FilteredMediaResponse {
     faceDetections: Array<{
       id: string;
       faceId: string;
-      faceRectangle: any;
+      faceRectangle: {
+        top: number;
+        left: number;
+        width: number;
+        height: number;
+      };
       confidence: number;
       isIdentified: boolean;
       identifiedUserId?: string;
-      faceAttributes?: any;
+      faceAttributes?: Record<string, unknown>;
       createdAt: string;
     }>;
   }>;
@@ -731,7 +736,14 @@ export const getEventFaceProfiles = async (
 ): Promise<{
   success: boolean;
   message: string;
-  profiles: any[];
+  profiles: Array<{
+    id: string;
+    userId: string;
+    eventId: string;
+    enrollmentConfidence: number;
+    faceAttributes?: Record<string, unknown>;
+    createdAt: string;
+  }>;
   pagination: {
     page: number;
     limit: number;
@@ -749,7 +761,21 @@ export const getMediaFaceDetections = async (
 ): Promise<{
   success: boolean;
   message: string;
-  faceDetections: any[];
+  faceDetections: Array<{
+    id: string;
+    faceId: string;
+    faceRectangle: {
+      top: number;
+      left: number;
+      width: number;
+      height: number;
+    };
+    confidence: number;
+    isIdentified: boolean;
+    identifiedUserId?: string;
+    faceAttributes?: Record<string, unknown>;
+    createdAt: string;
+  }>;
 }> => {
   return authenticatedApiCall(`/faces/media/${mediaId}/faces`);
 };
