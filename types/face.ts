@@ -38,7 +38,6 @@ export interface FaceDetection {
   faceId: string;
   persistedFaceId?: string;
   faceRectangle: FaceRectangle;
-  faceAttributes?: FaceAttributes;
   confidence: number;
   isIdentified: boolean;
   identifiedUserId?: string;
@@ -55,7 +54,6 @@ export interface UserFaceProfile {
   faceId: string;
   enrollmentMediaId: string;
   faceRectangle: FaceRectangle;
-  faceAttributes?: FaceAttributes;
   enrollmentConfidence: number;
   isActive: boolean;
   createdAt: string;
