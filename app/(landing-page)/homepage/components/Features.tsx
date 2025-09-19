@@ -12,7 +12,7 @@ export default function Features() {
         <Partners />
       </div>
       <div className="flex justify-center">
-        <div className="w-full mx-4 md:mx-8 lg:mx-32 my-8 md:my-12  max-w-[90rem]">
+        <div className="w-full mx-4 md:mx-8 lg:mx-32 my-8 md:my-12  max-w-7xl">
           {/* For mobile & tablet: stack everything in a single column */}
           {/* For desktop: maintain original grid layout */}
           <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-5 gap-4 md:gap-5">
@@ -73,7 +73,7 @@ export default function Features() {
                     QR CODE TEMPLATES
                   </h1>
                   <p className="text-sm text-[#FCFCFE99] font-semibold tracking-widest">
-                    Each PXF event has a unique QR code that participants can
+                    Each PICHA event has a unique QR code that participants can
                     scan to join. Choose between one of the pre-styled templates
                     or design your own.
                   </p>
@@ -113,12 +113,12 @@ export default function Features() {
               {/* Text content with overlay */}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black to-transparent pt-10 pb-4 px-4 md:px-5">
                 <h1 className="text-lg md:text-xl font-bold text-white mb-1 md:mb-2">
-                  PXF SHARING BLOCKS
+                  PICHA SHARING BLOCKS
                 </h1>
                 <p className="text-sm text-[#FCFCFE99] font-semibold tracking-widest">
-                  The easiest way to share your PXF Camera with your guests.
+                  The easiest way to share your PICHA Camera with your guests.
                   Guests hold their phone over the block to magically pull up
-                  your event&apos;s PXF Camera.
+                  your event&apos;s PICHA Camera.
                 </p>
               </div>
             </div>

@@ -196,3 +196,4 @@ If the issue persists, please share:
 4. The backend logs from the Azure Face Service
 
 This will help identify the specific cause of the "Invalid request" error.
+

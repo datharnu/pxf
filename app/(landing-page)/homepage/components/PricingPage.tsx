@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Check,
   Users,
@@ -11,6 +11,8 @@ import {
   Sparkles,
   ArrowRight,
   Gift,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 interface PricingPlan {
@@ -152,10 +154,29 @@ export default function Pricing() {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">(
     "monthly"
   );
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const formatPrice = (price: number) => {
     if (price === 0) return "Free";
     return `₦${price.toLocaleString()}`;
+  };
+
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({
+        left: -336, // Width of card + gap (320 + 16)
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({
+        left: 336, // Width of card + gap (320 + 16)
+        behavior: "smooth",
+      });
+    }
   };
 
   const handleSelectPlan = (planId: string) => {
@@ -169,10 +190,10 @@ export default function Pricing() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
             Choose Your Event Plan
           </h1>
-          <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+          <p className="text-sm sofia-sans tracking-wide text-gray-300 mb-8 max-w-3xl mx-auto">
             Create unforgettable memories with your guests. From intimate
             gatherings to large celebrations, we&apos;ve got the perfect plan
             for your event.
@@ -207,11 +228,11 @@ export default function Pricing() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="flex overflow-x-auto gap-8 md:grid md:grid-cols-2 lg:grid-cols-3 scrollbar-hide px-4 md:px-0">
           {pricingPlans.map((plan, index) => (
             <div
               key={plan.id}
-              className={`relative bg-slate-800/50 backdrop-blur-sm border rounded-2xl p-6 transition-all duration-300 hover:scale-105 hover:shadow-2xl ${
+              className={`relative bg-slate-800/50 backdrop-blur-sm border rounded-2xl p-6 pt-14 transition-all duration-300 hover:scale-105 hover:shadow-2xl flex-shrink-0 w-80 md:w-auto md:flex-shrink ${
                 plan.popular
                   ? "border-blue-500 shadow-lg shadow-blue-500/25"
                   : plan.premium
@@ -222,12 +243,13 @@ export default function Pricing() {
               } ${selectedPlan === plan.id ? "ring-2 ring-white/20" : ""}`}
               style={{
                 animationDelay: `${index * 100}ms`,
+                minHeight: "600px",
               }}
             >
               {/* Popular/Premium Badge */}
               {(plan.popular || plan.premium || plan.price === 0) && (
                 <div
-                  className={`absolute -top-4 left-1/2 transform -translate-x-1/2 px-4 py-1 rounded-full text-sm font-medium ${
+                  className={`absolute -top-1 left-1/2 transform -translate-x-1/2 px-4 py-1 rounded-full text-sm font-medium ${
                     plan.price === 0
                       ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
                       : plan.popular
@@ -382,6 +404,188 @@ export default function Pricing() {
           <button className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
             Contact our sales team →
           </button>
+        </div>
+      </div>
+
+      {/* Browse by Topic Section */}
+      <div className="topics mt-20">
+        <div className="topics-container max-w-7xl mx-auto px-4">
+          <div className="margin-bottom-36px _36 mb-9">
+            <h2 className="blog-content-headline text-2xl font-bold text-white text-center mb-4">
+              Browse by Topic
+            </h2>
+          </div>
+
+          <div className="slide_contain">
+            <div className="slide_wrap w-dyn-list">
+              <div
+                ref={scrollContainerRef}
+                role="list"
+                className="slide_list w-dyn-items flex justify-start items-stretch w-full overflow-x-auto gap-6 scrollbar-hide pb-4"
+              >
+                {/* Event Types */}
+                <div
+                  role="listitem"
+                  className="slide_item w-dyn-item flex-shrink-0"
+                >
+                  <a
+                    href="/create-event?type=wedding"
+                    className="slide_card w-inline-block relative w-80 h-48 rounded-2xl overflow-hidden bg-cover bg-center flex items-end p-6 hover:scale-105 transition-transform duration-300"
+                    style={{
+                      backgroundImage: "url('/wedding-party.jpg')",
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-black/40"></div>
+                    <h3 className="card_title text-white text-xl font-bold relative z-10">
+                      Wedding Events
+                    </h3>
+                  </a>
+                </div>
+
+                <div
+                  role="listitem"
+                  className="slide_item w-dyn-item flex-shrink-0"
+                >
+                  <a
+                    href="/create-event?type=corporate"
+                    className="slide_card w-inline-block relative w-80 h-48 rounded-2xl overflow-hidden bg-cover bg-center flex items-end p-6 hover:scale-105 transition-transform duration-300"
+                    style={{
+                      backgroundImage: "url('/company-party.jpg')",
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-black/40"></div>
+                    <h3 className="card_title text-white text-xl font-bold relative z-10">
+                      Corporate Events
+                    </h3>
+                  </a>
+                </div>
+
+                <div
+                  role="listitem"
+                  className="slide_item w-dyn-item flex-shrink-0"
+                >
+                  <a
+                    href="/create-event?type=concert"
+                    className="slide_card w-inline-block relative w-80 h-48 rounded-2xl overflow-hidden bg-cover bg-center flex items-end p-6 hover:scale-105 transition-transform duration-300"
+                    style={{
+                      backgroundImage: "url('/concert1.jpg')",
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-black/40"></div>
+                    <h3 className="card_title text-white text-xl font-bold relative z-10">
+                      Concerts & Shows
+                    </h3>
+                  </a>
+                </div>
+
+                <div
+                  role="listitem"
+                  className="slide_item w-dyn-item flex-shrink-0"
+                >
+                  <a
+                    href="/create-event?type=sports"
+                    className="slide_card w-inline-block relative w-80 h-48 rounded-2xl overflow-hidden bg-cover bg-center flex items-end p-6 hover:scale-105 transition-transform duration-300"
+                    style={{
+                      backgroundImage: "url('/gym1.jpg')",
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-black/40"></div>
+                    <h3 className="card_title text-white text-xl font-bold relative z-10">
+                      Sports Events
+                    </h3>
+                  </a>
+                </div>
+
+                <div
+                  role="listitem"
+                  className="slide_item w-dyn-item flex-shrink-0"
+                >
+                  <a
+                    href="/create-event?type=conference"
+                    className="slide_card w-inline-block relative w-80 h-48 rounded-2xl overflow-hidden bg-cover bg-center flex items-end p-6 hover:scale-105 transition-transform duration-300"
+                    style={{
+                      backgroundImage: "url('/conference.jpg')",
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-black/40"></div>
+                    <h3 className="card_title text-white text-xl font-bold relative z-10">
+                      Conferences
+                    </h3>
+                  </a>
+                </div>
+
+                <div
+                  role="listitem"
+                  className="slide_item w-dyn-item flex-shrink-0"
+                >
+                  <a
+                    href="/create-event?type=club"
+                    className="slide_card w-inline-block relative w-80 h-48 rounded-2xl overflow-hidden bg-cover bg-center flex items-end p-6 hover:scale-105 transition-transform duration-300"
+                    style={{
+                      backgroundImage: "url('/club.jpg')",
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-black/40"></div>
+                    <h3 className="card_title text-white text-xl font-bold relative z-10">
+                      Club Events
+                    </h3>
+                  </a>
+                </div>
+
+                <div
+                  role="listitem"
+                  className="slide_item w-dyn-item flex-shrink-0"
+                >
+                  <a
+                    href="/create-event?type=church"
+                    className="slide_card w-inline-block relative w-80 h-48 rounded-2xl overflow-hidden bg-cover bg-center flex items-end p-6 hover:scale-105 transition-transform duration-300"
+                    style={{
+                      backgroundImage: "url('/church1.jpg')",
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-black/40"></div>
+                    <h3 className="card_title text-white text-xl font-bold relative z-10">
+                      Church Events
+                    </h3>
+                  </a>
+                </div>
+
+                <div
+                  role="listitem"
+                  className="slide_item w-dyn-item flex-shrink-0"
+                >
+                  <a
+                    href="/create-event?type=school"
+                    className="slide_card w-inline-block relative w-80 h-48 rounded-2xl overflow-hidden bg-cover bg-center flex items-end p-6 hover:scale-105 transition-transform duration-300"
+                    style={{
+                      backgroundImage: "url('/school.jpg')",
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-black/40"></div>
+                    <h3 className="card_title text-white text-xl font-bold relative z-10">
+                      School Events
+                    </h3>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation Arrows */}
+            <div className="slide_arrows flex justify-center items-center gap-4 mt-6">
+              <button
+                onClick={scrollLeft}
+                className="slide_arrow is--left w-inline-block bg-slate-800/50 hover:bg-slate-700/50 p-3 rounded-full transition-all duration-300 group"
+              >
+                <ChevronLeft className="w-6 h-6 text-white group-hover:text-yellow-400" />
+              </button>
+              <button
+                onClick={scrollRight}
+                className="slide_arrow is--right w-inline-block bg-slate-800/50 hover:bg-slate-700/50 p-3 rounded-full transition-all duration-300 group"
+              >
+                <ChevronRight className="w-6 h-6 text-white group-hover:text-yellow-400" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

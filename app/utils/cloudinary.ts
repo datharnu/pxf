@@ -9,9 +9,9 @@ export const CLOUDINARY_CONFIG = {
 
 // File size limits (in bytes)
 export const FILE_SIZE_LIMITS = {
-  image: 10 * 1024 * 1024, // 10MB for images
-  video: 100 * 1024 * 1024, // 100MB for videos
-  total: 500 * 1024 * 1024, // 500MB total per upload session
+  image: 10 * 1024 * 1024, // 10MB for images (Cloudinary account limit)
+  video: 10 * 1024 * 1024, // 10MB for videos (Cloudinary account limit)
+  total: 1024 * 1024 * 1024, // 1GB total per upload session
 };
 
 // Upload performance settings

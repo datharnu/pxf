@@ -163,6 +163,7 @@
 
 "use client";
 import React, { useState, useRef, DragEvent, ChangeEvent } from "react";
+import { validateFileSize } from "@/app/utils/cloudinary";
 
 interface StepThreeProps {
   formData: {
@@ -246,10 +247,13 @@ const StepThree: React.FC<StepThreeProps> = ({
       return;
     }
 
-    // Check file size (optional - Cloudinary handles this but good for UX)
-    if (file.size > 25 * 1024 * 1024) {
-      // 25MB limit
-      setUploadError("File size must be less than 25MB");
+    // Validate file size using centralized configuration
+    try {
+      validateFileSize(file);
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : "File size too large"
+      );
       return;
     }
 

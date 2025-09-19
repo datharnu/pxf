@@ -277,9 +277,9 @@ function MyEventsContent() {
                 className=" flex items-center gap-5 shadow-sm hover:shadow-md transition-shadow"
               >
                 {/* Event Image */}
-                <div
-                  className="cursor-pointer"
-                  onClick={() => router.push(`/event/${event.eventSlug}`)}
+                <a
+                  href={`/event/${event.eventSlug}`}
+                  className="cursor-pointer block"
                   title="Open event"
                 >
                   {event.eventFlyer ? (
@@ -295,7 +295,7 @@ function MyEventsContent() {
                       <ImageIcon className="w-6 h-6 text-gray-400" />
                     </div>
                   )}
-                </div>
+                </a>
 
                 {/* Event Content */}
                 <div className="">
@@ -326,7 +326,22 @@ function MyEventsContent() {
                   <div className="flex items-center gap-5 ">
                     <div className="bg-[#353935] px-6 rounded-full py-2 ">
                       <button
-                        onClick={() => router.push(`/event/${event.eventSlug}`)}
+                        onClick={() => {
+                          console.log(
+                            "Button click - Navigating to:",
+                            `/event/${event.eventSlug}`
+                          );
+                          console.log("Event data:", event);
+                          console.log("Router object:", router);
+
+                          try {
+                            router.push(`/event/${event.eventSlug}`);
+                          } catch (error) {
+                            console.error("Router.push failed:", error);
+                            // Fallback to window.location
+                            window.location.href = `/event/${event.eventSlug}`;
+                          }
+                        }}
                         className="flex items-center text-sm text-white cursor-pointer"
                       >
                         <ImageIcon className="w-3 h-3" />

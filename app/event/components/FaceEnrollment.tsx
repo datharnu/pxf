@@ -3,6 +3,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import { validateFileSize } from "@/app/utils/cloudinary";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -37,9 +38,11 @@ export const FaceEnrollment: React.FC<FaceEnrollmentProps> = ({
       return;
     }
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setError("Image size must be less than 10MB");
+    // Validate file size using centralized configuration
+    try {
+      validateFileSize(file);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "File size too large");
       return;
     }
 

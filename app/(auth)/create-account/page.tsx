@@ -68,7 +68,7 @@ export default function Signup() {
     <section className="min-h-screen bg-black flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h1 className="text-center text-3xl font-extrabold text-white">
-          Welcome to PXF
+          Welcome to PICHA
         </h1>
         <p className="mt-2 text-center text-sm text-gray-400">
           Create your account to get started
@@ -258,7 +258,7 @@ export default function Signup() {
           {/* Terms and Privacy */}
           <div className="mt-6 text-center text-sm text-gray-400">
             <p>
-              By creating an account, I agree to PXF{" "}
+              By creating an account, I agree to PICHA{" "}
               <a
                 href="#"
                 className="font-medium text-orange-500 hover:text-orange-400"

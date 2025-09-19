@@ -440,12 +440,19 @@ export default function EventSlugPage() {
   const router = useRouter();
   const params = useParams();
 
-  const slug =
-    typeof window !== "undefined"
-      ? window.location.pathname.split("/").pop()
-      : "";
+  // Use Next.js params instead of manual URL parsing
+  const slug = (params?.id as string) || "";
 
+  console.log(
+    "Full URL:",
+    typeof window !== "undefined" ? window.location.href : ""
+  );
+  console.log(
+    "Pathname:",
+    typeof window !== "undefined" ? window.location.pathname : ""
+  );
   console.log("Extracted slug from URL:", slug);
+  console.log("Params from useParams:", params);
 
   const [eventData, setEventData] = useState<EventData | null>(null);
   const [mediaData, setMediaData] = useState<EventMediaResponse | null>(null);

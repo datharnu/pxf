@@ -116,3 +116,4 @@ export const FaceDetectionOverlayCompact: React.FC<
     </div>
   );
 };
+

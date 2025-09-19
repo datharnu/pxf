@@ -11,7 +11,7 @@ export default function HomePage() {
   return (
     <div className="">
       <Heropage />
-      <hr className=" border-gray-300  " />
+      {/* <hr className=" border-gray-300  " /> */}
       <Features />
       <Pricing />
       <FAQMOBILE />

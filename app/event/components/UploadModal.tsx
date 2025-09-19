@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Upload, X, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { api } from "@/api/axios";
 import { useQuery } from "@tanstack/react-query";
+import { validateFileSize } from "@/app/utils/cloudinary";
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -209,6 +210,9 @@ export function UploadModal({
 
       for (const file of Array.from(files)) {
         try {
+          // Validate file size before upload
+          validateFileSize(file);
+
           const result = await uploadToCloudinary(file, signatureResponse);
           results.push(result);
           completed++;

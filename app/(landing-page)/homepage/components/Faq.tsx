@@ -11,17 +11,17 @@ const faqItems: FAQItem[] = [
   {
     question: "How is it possible guests don't have to download the app?",
     answer:
-      "Guests can access PXF directly through a link or QR code in their browser. There’s no need to download or install anything they simply click, join, and start uploading or viewing photos instantly.",
+      "Guests can access PICHA directly through a link or QR code in their browser. There’s no need to download or install anything they simply click, join, and start uploading or viewing photos instantly.",
     icon: "/pov1.svg",
   },
   {
-    question: "Does PXF work without internet?",
+    question: "Does PICHA work without internet?",
     answer:
-      "PXF requires the internet (either WiFi or cellular data) to both access the experience and send in photos . For the vast majority of locations, this isn't an issue, but if you are using PXF in an area that has spotty internet, we recommend testing it out at the venue beforehand.",
+      "PICHA requires the internet (either WiFi or cellular data) to both access the experience and send in photos . For the vast majority of locations, this isn't an issue, but if you are using PICHA in an area that has spotty internet, we recommend testing it out at the venue beforehand.",
     icon: "/pov2.svg",
   },
   {
-    question: "How much does PXF cost?",
+    question: "How much does PICHA cost?",
     answer:
       "It's free for events with up to 10 participants. For larger events, we offer affordable premium plans with additional features. Check our pricing page for detailed information on all available plans.",
     icon: "/pov3.svg",
@@ -41,7 +41,7 @@ const faqItems: FAQItem[] = [
   {
     question: "Additional Questions?",
     answer:
-      "Feel free to contact our support team via the app or email us at support@PXFapp.com. We typically respond within 24 hours and are happy to help with any questions or concerns you might have.",
+      "Feel free to contact our support team via the app or email us at support@pichaapp.com. We typically respond within 24 hours and are happy to help with any questions or concerns you might have.",
     icon: "/pov6.svg",
   },
 ];
@@ -93,14 +93,16 @@ const SingleFAQItem = ({ item }: { item: FAQItem }) => {
 // Main FAQ component
 const FAQ = () => {
   return (
-    <div className="bg-primary flex justify-center hidden lg:block pb-20">
-      <div className="mx-4 md:mx-8 lg:mx-32 max-w-[90rem] ">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
-          {faqItems.map((item, index) => (
-            <div key={index} className="w-full h-full ">
-              <SingleFAQItem item={item} />
-            </div>
-          ))}
+    <div className="hidden lg:block">
+      <div className="bg-primary  flex justify-center  pb-20 ">
+        <div className="flex justify-center mx-4 md:mx-8  max-w-7xl ">
+          <div className="grid grid-cols-1  md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
+            {faqItems.map((item, index) => (
+              <div key={index} className="w-full h-full">
+                <SingleFAQItem item={item} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

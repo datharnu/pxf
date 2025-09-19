@@ -316,3 +316,4 @@ For issues related to:
 The Azure Face API integration provides a powerful way to enhance user experience by automatically organizing photos based on face detection. Users can easily find photos of themselves, while event creators get valuable insights into photo engagement.
 
 The implementation is fully integrated into your existing codebase and follows your design patterns. All components are responsive, accessible, and optimized for performance.
+
