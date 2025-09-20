@@ -160,7 +160,7 @@ export const MyFacesView: React.FC<MyFacesViewProps> = ({ eventId }) => {
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-zinc-50 mb-2">My PXF</h2>
+          <h2 className="text-2xl font-bold text-zinc-50 mb-2">My Picha</h2>
           <p className="text-zinc-400">Photos with Your Face</p>
         </div>
         <FaceStatus eventId={eventId} onStatusChange={setHasFaceProfile} />
@@ -172,7 +172,7 @@ export const MyFacesView: React.FC<MyFacesViewProps> = ({ eventId }) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-zinc-50 mb-2">My PXF</h2>
+        <h2 className="text-2xl font-bold text-zinc-50 mb-2">My Picha</h2>
         <p className="text-zinc-400">
           Photos with Your Face ({summary?.totalMatches || 0} found)
         </p>

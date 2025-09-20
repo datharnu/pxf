@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -8,6 +7,7 @@ import { Button } from "../ui/button";
 import { Menu, X, ChevronRight, ScanLine } from "lucide-react";
 import { useIsUserLoggedInStore } from "@/store/userStore";
 import ProfileAvatar from "./AvatarImage";
+import Image from "next/image";
 
 // Add props to accept QR scanner functions
 interface NavbarProps {
@@ -73,7 +73,7 @@ export default function Navbar({
           <div className="flex items-center gap-20">
             <div className="flex items-center">
               <Link href={"/"} className="text-xl font-bold">
-                PXF
+                Picha
               </Link>
             </div>
 
@@ -167,7 +167,12 @@ export default function Navbar({
                 href={"/"}
                 className="text-white font-bold text-xl tracking-wider"
               >
-                PXF
+                <Image
+                  src={"/pica-logo.png"}
+                  alt="logo"
+                  width={100}
+                  height={100}
+                />
               </Link>
               <button
                 onClick={toggleMenu}

@@ -30,7 +30,7 @@ export default function ModernFooter() {
                 <Camera className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
-                PXF Events
+                Picha Events
               </span>
             </div>
             <p className="text-gray-300 text-sm mb-6">

@@ -27,7 +27,7 @@ const eventSlides = [
     icon: <ConferenceIcon className="w-6 h-6 lg:w-10 lg:h-10" />,
     image: "/conference.jpg",
     quote:
-      "PXF brought a whole new dimension to our conference — attendees were engaged like never before.",
+      "Picha brought a whole new dimension to our conference — attendees were engaged like never before.",
     author: "— Head of Events, Tech Summit",
   },
   {
@@ -35,7 +35,7 @@ const eventSlides = [
     icon: <ConcertIcon className="w-6 h-6 lg:w-10 lg:h-10" />,
     image: "/concert1.jpg",
     quote:
-      "PXF turned our concert into a multi-angle experience — fans felt like they were on stage!",
+      "Picha turned our concert into a multi-angle experience — fans felt like they were on stage!",
     author: "— Concert Director",
   },
   {
@@ -43,7 +43,7 @@ const eventSlides = [
     icon: <ClubIcon className="w-6 h-6 lg:w-10 lg:h-10" />,
     image: "/club.jpg",
     quote:
-      "We used PXF for a club event and it captured the energy, lights, and vibe perfectly.",
+      "We used Picha for a club event and it captured the energy, lights, and vibe perfectly.",
     author: "— Nightlife Event Coordinator",
   },
   {
@@ -51,7 +51,7 @@ const eventSlides = [
     icon: <HangoutIcon className="w-6 h-6 lg:w-10 lg:h-10" />,
     image: "/school.jpg",
     quote:
-      "Our students loved using PXF — it made our school events feel dynamic and exciting.",
+      "Our students loved using Picha — it made our school events feel dynamic and exciting.",
     author: "— School Activities Director",
   },
   {
@@ -59,7 +59,7 @@ const eventSlides = [
     icon: <WeddingPartyIcon className="w-6 h-6 lg:w-10 lg:h-10" />,
     image: "/wedding-party.jpg",
     quote:
-      "PXF helped us relive our wedding from every angle — it felt like experiencing it all over again.",
+      "Picha helped us relive our wedding from every angle — it felt like experiencing it all over again.",
     author: "— Newlywed Couple",
   },
   {
@@ -67,7 +67,7 @@ const eventSlides = [
     icon: <ChurchIcon className="w-6 h-6 lg:w-10 lg:h-10" />,
     image: "/church1.jpg",
     quote:
-      "From sermons to celebrations, PXF made our church event unforgettable and heartfelt.",
+      "From sermons to celebrations, Picha made our church event unforgettable and heartfelt.",
     author: "— Worship Experience Leader",
   },
   {
@@ -75,7 +75,7 @@ const eventSlides = [
     icon: <SportIcon className="w-6 h-6 lg:w-10 lg:h-10" />,
     image: "/gym1.jpg",
     quote:
-      "Using PXF at our gym gave clients a new way to see progress and celebrate their fitness journey.",
+      "Using Picha at our gym gave clients a new way to see progress and celebrate their fitness journey.",
     author: "— Fitness Coach",
   },
 ];
