@@ -8,7 +8,7 @@ interface UploadPreviewProps {
   uploadProgress: number;
   isComplete: boolean;
   thumbnail: string;
-  onRemove?: () => void;
+  onRemove?: () => void; // eslint-disable-line @typescript-eslint/no-unused-vars
 }
 
 export const UploadPreview: React.FC<UploadPreviewProps> = ({
@@ -35,6 +35,7 @@ export const UploadPreview: React.FC<UploadPreviewProps> = ({
     <div className="relative bg-zinc-800 rounded-lg overflow-hidden">
       {/* Image Preview */}
       <div className="relative aspect-square">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={previewUrl}
           alt={file.name}
