@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
+import { ProgressiveImage } from "@/components/shared/ProgressiveImage";
 import { api } from "@/api/axios";
 import EventFlyer from "../components/EventFlyer";
 import { UploadModal } from "../components/UploadModal";
@@ -71,6 +72,7 @@ interface EventData {
   eventFlyer?: string;
   guestLimit: string;
   photoCapLimit: string;
+  customPhotoCapLimit?: number;
   isPasswordProtected: boolean;
   eventDate: string;
   eventSlug: string;
@@ -91,6 +93,7 @@ interface MediaItem {
   fileSize: string;
   mimeType: string;
   cloudinaryPublicId: string;
+  thumbnailUrl?: string; // For progressive loading
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -241,6 +244,7 @@ const PreviewModal = ({
             alt={currentMedia.fileName}
             fill
             className="object-contain"
+            priority={true}
           />
         )}
       </div>
@@ -1055,7 +1059,7 @@ export default function EventSlugPage() {
       return (
         <div className="space-y-6">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-zinc-50 mb-2">My PXF</h2>
+            <h2 className="text-2xl font-bold text-zinc-50 mb-2">My Picha</h2>
             <p className="text-zinc-400">Photos with Your Face</p>
           </div>
           <FaceStatus
@@ -1072,7 +1076,7 @@ export default function EventSlugPage() {
       return (
         <div className="space-y-6">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-zinc-50 mb-2">My PXF</h2>
+            <h2 className="text-2xl font-bold text-zinc-50 mb-2">My Picha</h2>
             <p className="text-zinc-400">Photos with Your Face</p>
           </div>
           <FaceStatus
@@ -1094,6 +1098,16 @@ export default function EventSlugPage() {
       : activeFilter.startsWith("user:") && userUploadsData
       ? userUploadsData.uploads
       : mediaData?.media || [];
+
+  // Debug media data
+  console.log("Media display debug:", {
+    activeFilter,
+    mediaDataExists: !!mediaData,
+    mediaCount: mediaData?.media?.length || 0,
+    myUploadsDataExists: !!myUploadsData,
+    displayMediaCount: displayMedia.length,
+    firstMedia: displayMedia[0] || null,
+  });
 
   // Determine which stats to display based on active filter
   const displayStats =
@@ -1846,6 +1860,12 @@ export default function EventSlugPage() {
             eventData={{
               ...eventData,
               photoCapLimit: Number(eventData.photoCapLimit),
+              guestLimit: eventData.guestLimit,
+              customPhotoCapLimit: eventData.customPhotoCapLimit,
+              creator: {
+                id: eventData.creator.id,
+                fullname: eventData.creator.fullname,
+              },
             }}
             onAddShots={navigateToEvent}
             onUploadSuccess={() => {

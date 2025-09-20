@@ -4,6 +4,8 @@
 
 import React, { useState, useRef } from "react";
 import { validateFileSize } from "@/app/utils/s3";
+import { isAuthenticated } from "@/app/utils/auth";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -24,6 +26,7 @@ export const FaceEnrollment: React.FC<FaceEnrollmentProps> = ({
   eventId,
   onEnrolled,
 }) => {
+  const router = useRouter();
   const [enrolling, setEnrolling] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -31,7 +34,21 @@ export const FaceEnrollment: React.FC<FaceEnrollmentProps> = ({
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const checkAuthAndProceed = () => {
+    if (!isAuthenticated()) {
+      const currentUrl = window.location.pathname + window.location.search;
+      router.push(`/sign-in?redirect=${encodeURIComponent(currentUrl)}`);
+      return false;
+    }
+    return true;
+  };
+
   const handleFileSelect = (file: File) => {
+    // Check authentication first
+    if (!checkAuthAndProceed()) {
+      return;
+    }
+
     // Validate file type
     if (!file.type.startsWith("image/")) {
       setError("Please select an image file");
@@ -65,10 +82,8 @@ export const FaceEnrollment: React.FC<FaceEnrollmentProps> = ({
     setError("");
 
     try {
-      // Validate file before upload
-      if (selectedFile.size > 10 * 1024 * 1024) {
-        throw new Error("Image size must be less than 10MB");
-      }
+      // Validate file before upload using centralized validation
+      validateFileSize(selectedFile);
 
       if (!selectedFile.type.startsWith("image/")) {
         throw new Error("Please select an image file");
@@ -256,8 +271,8 @@ export const FaceEnrollment: React.FC<FaceEnrollmentProps> = ({
                 Face enrolled successfully!
               </p>
               <p className="text-xs text-green-400">
-                You can now find photos with your face in the &quot;My PXF&quot;
-                tab.
+                You can now find photos with your face in the &quot;My
+                Picha&quot; tab.
               </p>
             </div>
           </div>

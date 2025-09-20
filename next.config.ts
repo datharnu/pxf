@@ -15,6 +15,12 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "picha-media.s3.eu-north-1.amazonaws.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
 };

@@ -58,8 +58,11 @@ export const uploadToS3 = async (
 
   try {
     // Step 1: Get presigned URL from backend
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL ||
+      "https://pxfbackend.onrender.com/api/v1";
     const presignedResponse = await fetch(
-      `/api/v1/media/event/${eventId}/s3-presigned-url`,
+      `${apiUrl}/media/event/${eventId}/s3-presigned-url`,
       {
         method: "POST",
         headers: {
@@ -74,10 +77,20 @@ export const uploadToS3 = async (
     );
 
     if (!presignedResponse.ok) {
-      throw new Error("Failed to get presigned URL");
+      const errorText = await presignedResponse.text();
+      console.error("Presigned URL error:", {
+        status: presignedResponse.status,
+        statusText: presignedResponse.statusText,
+        error: errorText,
+      });
+      throw new Error(
+        `Failed to get presigned URL: ${presignedResponse.status} ${errorText}`
+      );
     }
 
-    const { presignedUrl, key } = await presignedResponse.json();
+    const responseData = await presignedResponse.json();
+    console.log("Presigned URL response:", responseData);
+    const { presignedUrl, key } = responseData;
 
     // Step 2: Upload file directly to S3
     const uploadResponse = await fetch(presignedUrl, {
@@ -89,7 +102,15 @@ export const uploadToS3 = async (
     });
 
     if (!uploadResponse.ok) {
-      throw new Error("Failed to upload to S3");
+      const errorText = await uploadResponse.text();
+      console.error("S3 upload error:", {
+        status: uploadResponse.status,
+        statusText: uploadResponse.statusText,
+        error: errorText,
+      });
+      throw new Error(
+        `Failed to upload to S3: ${uploadResponse.status} ${errorText}`
+      );
     }
 
     if (onProgress) {

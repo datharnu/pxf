@@ -8,6 +8,7 @@ export interface MediaItem {
   fileSize: string;
   mimeType: string;
   cloudinaryPublicId: string;
+  thumbnailUrl?: string; // For progressive loading
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

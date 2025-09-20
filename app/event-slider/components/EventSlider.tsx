@@ -19,7 +19,7 @@ const eventSlides = [
     icon: <BriefcaseIcon className="w-6 h-6 lg:w-10 lg:h-10" />,
     image: "/company-party.jpg",
     quote:
-      "I first discovered PXF at a wedding and instantly knew it had to be part of our company events.",
+      "I first discovered Picha at a wedding and instantly knew it had to be part of our company events.",
     author: "— Marketing Manager at Rentville",
   },
   {

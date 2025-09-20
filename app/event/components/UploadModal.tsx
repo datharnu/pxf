@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // /* eslint-disable @typescript-eslint/no-unused-vars */
 // // components/UploadModal.tsx
@@ -8,6 +9,11 @@ import { Upload, X, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { api } from "@/api/axios";
 import { useQuery } from "@tanstack/react-query";
 import { validateFileSize, uploadMultipleToS3 } from "@/app/utils/s3";
+import { isAuthenticated } from "@/app/utils/auth";
+import { useRouter } from "next/navigation";
+import { getUploadLimits, isEventCreator } from "@/app/utils/uploadLimits";
+import { useUserIdStore } from "@/store/userStore";
+import { processingTracker } from "@/app/utils/processingTracker";
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -18,7 +24,10 @@ interface UploadModalProps {
     description?: string;
     eventDate: string;
     photoCapLimit: number;
+    guestLimit: string;
+    customPhotoCapLimit?: number;
     creator: {
+      id: string;
       fullname: string;
     };
   };
@@ -51,6 +60,7 @@ export function UploadModal({
   onAddShots,
   onUploadSuccess,
 }: UploadModalProps) {
+  const router = useRouter();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<
@@ -72,6 +82,7 @@ export function UploadModal({
     queryKey: ["uploadStats", eventData.id],
     queryFn: async () => {
       const response = await api.get(`/media/event/${eventData.id}/my-uploads`);
+      console.log("Backend upload stats response:", response.data);
       return response.data.stats;
     },
     enabled: isOpen, // Only fetch when modal is open
@@ -81,9 +92,25 @@ export function UploadModal({
 
   // S3 upload logic is now handled by utility functions
 
+  // Check authentication before allowing upload
+  const checkAuthAndProceed = () => {
+    if (!isAuthenticated()) {
+      // Redirect to sign-in page with return URL
+      const currentUrl = window.location.pathname + window.location.search;
+      router.push(`/sign-in?redirect=${encodeURIComponent(currentUrl)}`);
+      return false;
+    }
+    return true;
+  };
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+
+    // Check authentication first
+    if (!checkAuthAndProceed()) {
+      return;
+    }
 
     setIsUploading(true);
     setUploadStatus("idle");
@@ -94,14 +121,15 @@ export function UploadModal({
       // Check upload limits (this should now be handled by the backend)
       // But we can still do basic client-side validation
 
-      // Optimistically show reduced remaining uploads while uploading
-      const currentRemaining =
-        uploadStats?.remainingUploads ?? eventData.photoCapLimit;
+      // Use the calculated remaining uploads (accounting for new tiered limits)
+      const currentRemaining = remainingUploads;
 
       // Check if user has remaining uploads
       if (currentRemaining <= 0) {
         throw new Error(
-          `You have reached your upload limit of ${eventData.photoCapLimit} files for this event`
+          `You have reached your upload limit of ${userUploadLimit} files for this event as a ${
+            userIsCreator ? "creator" : "guest"
+          }`
         );
       }
 
@@ -125,69 +153,103 @@ export function UploadModal({
         }
       );
 
-      // Submit S3 media to backend
-      const submitResponse = await fetch(
-        `/api/v1/media/event/${eventData.id}/submit-s3-media`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            mediaUrls: s3Results.map((result) => ({
-              url: result.url,
-              fileName: result.fileName,
-              fileSize: result.fileSize,
-              mimeType: result.mimeType,
-              s3Key: result.key,
-            })),
-          }),
-        }
+      // Submit S3 media to backend using axios
+      console.log("Submitting media URLs to backend for event:", eventData.id);
+      console.log("User authenticated:", isAuthenticated());
+
+      // Check authentication token
+      const token = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("token="));
+      console.log("Auth token present:", !!token);
+      console.log(
+        "Token preview:",
+        token ? token.substring(0, 20) + "..." : "No token"
       );
 
-      if (!submitResponse.ok) {
-        throw new Error("Failed to submit media URLs to backend");
+      console.log("Media payload:", {
+        mediaUrls: s3Results.map((result) => ({
+          url: result.url,
+          fileName: result.fileName,
+          fileSize: result.fileSize,
+          mimeType: result.mimeType,
+          s3Key: result.key,
+        })),
+      });
+
+      // 🚀 INSTAGRAM-STYLE UPLOAD: Show success immediately, process in background
+
+      // Step 1: Show upload as "complete" immediately for great UX
+      setUploadStatus("success");
+      setUploadProgress(100);
+
+      // Step 2: Call success callbacks immediately for instant feedback
+      if (onUploadSuccess) {
+        onUploadSuccess();
       }
+      onAddShots(); // Refresh the parent component to show thumbnails immediately
 
-      const submitData = await submitResponse.json();
-
-      if (submitData.success) {
-        setUploadStatus("success");
-
-        // Check if face processing is happening
-        if (submitData.faceProcessing) {
-          console.log(
-            `Face processing: ${submitData.faceProcessing.imagesProcessed} images processed`
-          );
-          console.log(`Status: ${submitData.faceProcessing.status}`);
-        }
-
-        // Refresh the stats
-        await refetchStats();
+      // Step 3: Close modal quickly for snappy UX
+      setTimeout(() => {
+        onClose();
+        setIsUploading(false);
+        setUploadProgress(0);
+        setUploadStatus("idle");
         setOptimisticRemaining(null);
-
-        // Call the success callback if provided
-        if (onUploadSuccess) {
-          onUploadSuccess();
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
         }
+      }, 800); // Quick close for instant feedback
 
-        onAddShots(); // Refresh the parent component
+      // Step 4: Submit to backend in background (Instagram-style processing)
+      console.log("🔄 Background processing: Submitting to backend...");
 
-        // Close modal after a brief delay
-        setTimeout(() => {
-          onClose();
-          setIsUploading(false);
-          setUploadProgress(0);
-          setUploadStatus("idle");
-          setOptimisticRemaining(null);
-          // Reset file input
-          if (fileInputRef.current) {
-            fileInputRef.current.value = "";
+      // Add files to processing tracker for Instagram-style progressive loading
+      s3Results.forEach((result) => {
+        processingTracker.addProcessingItem(result.key);
+      });
+
+      // Process in background - don't await, don't block UX
+      api
+        .post(`/media/event/${eventData.id}/submit-s3-media`, {
+          mediaUrls: s3Results.map((result) => ({
+            url: result.url,
+            fileName: result.fileName,
+            fileSize: result.fileSize,
+            mimeType: result.mimeType,
+            s3Key: result.key,
+            thumbnail: result.thumbnail,
+          })),
+        })
+        .then((submitResponse) => {
+          console.log(
+            "✅ Background processing complete:",
+            submitResponse.data
+          );
+
+          // Mark all items as processing complete
+          s3Results.forEach((result) => {
+            processingTracker.markComplete(result.key);
+          });
+
+          // Check if face processing is happening
+          if (submitResponse.data.faceProcessing) {
+            console.log(
+              `Face processing: ${submitResponse.data.faceProcessing.imagesProcessed} images processed`
+            );
           }
-        }, 1500);
-      } else {
-        throw new Error("Failed to submit media URLs");
-      }
+
+          // Refresh stats after background processing completes
+          refetchStats();
+        })
+        .catch((error) => {
+          console.error("❌ Background processing failed:", error);
+          // Mark as complete anyway to avoid permanent processing state
+          s3Results.forEach((result) => {
+            processingTracker.markComplete(result.key);
+          });
+        });
     } catch (error) {
       console.error("Upload error:", error);
       setUploadStatus("error");
@@ -198,17 +260,49 @@ export function UploadModal({
   };
 
   const triggerFileInput = () => {
+    // Check authentication before opening file dialog
+    if (!checkAuthAndProceed()) {
+      return;
+    }
+
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
-  // Calculate remaining uploads
-  const remainingUploads =
-    uploadStats?.remainingUploads ?? eventData.photoCapLimit;
+  // Calculate upload limits based on user role and event guest limit
+  const currentUserId = useUserIdStore.getState().userId;
+  const userIsCreator = isEventCreator(
+    eventData.creator.id,
+    currentUserId || undefined
+  );
+  const userUploadLimit = getUploadLimits(
+    eventData.guestLimit,
+    eventData.customPhotoCapLimit,
+    userIsCreator
+  );
+
+  // Calculate remaining uploads - backend now returns correct tiered limits
+  const remainingUploads = uploadStats?.remainingUploads ?? userUploadLimit;
+
   const displayRemaining =
     optimisticRemaining !== null ? optimisticRemaining : remainingUploads;
+
+  // Debug logging for upload limits
+  console.log("Upload limits debug:", {
+    currentUserId,
+    eventCreatorId: eventData.creator.id,
+    userIsCreator,
+    guestLimit: eventData.guestLimit,
+    userUploadLimit,
+    customPhotoCapLimit: eventData.customPhotoCapLimit,
+    uploadStatsRemainingUploads: uploadStats?.remainingUploads,
+    uploadStatsTotalUploads: uploadStats?.totalUploads,
+    finalRemainingUploads: remainingUploads,
+    displayRemaining,
+  });
   const hasUploadsRemaining = displayRemaining > 0;
+  const userIsAuthenticated = isAuthenticated();
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -243,9 +337,11 @@ export function UploadModal({
             ) : (
               <div className="inline-flex items-center gap-2 px-3 py-1">
                 <p className="text-sm text-amber-300 font-medium">
-                  {displayRemaining} of {eventData.photoCapLimit} uploads
-                  remaining
+                  {displayRemaining} of {userUploadLimit} uploads remaining
                 </p>
+                <span className="text-xs text-amber-400">
+                  ({userIsCreator ? "Creator" : "Guest"})
+                </span>
               </div>
             )}
           </div>
@@ -253,7 +349,19 @@ export function UploadModal({
 
         {/* Content */}
         <div className="p-6 space-y-5">
-          {hasUploadsRemaining ? (
+          {!userIsAuthenticated ? (
+            <div className="text-center space-y-3">
+              <p className="text-sm text-zinc-400">
+                Please sign in to upload your photos and videos to this event.
+              </p>
+              <div className="flex items-center gap-2 justify-center">
+                <div className="w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center">
+                  <span className="text-xs text-zinc-900">!</span>
+                </div>
+                <p className="text-xs text-amber-400">Sign in required</p>
+              </div>
+            </div>
+          ) : hasUploadsRemaining ? (
             <p className="text-sm text-zinc-400 text-center">
               Select your best {displayRemaining} photo(s) or video(s)!
             </p>
@@ -325,11 +433,23 @@ export function UploadModal({
           />
 
           <Button
-            onClick={triggerFileInput}
-            disabled={isUploading || !hasUploadsRemaining || isLoadingStats}
+            onClick={
+              !userIsAuthenticated
+                ? () => checkAuthAndProceed()
+                : triggerFileInput
+            }
+            disabled={
+              userIsAuthenticated &&
+              (isUploading || !hasUploadsRemaining || isLoadingStats)
+            }
             className="w-full h-12 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-zinc-900 font-semibold shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
-            {isUploading ? (
+            {!userIsAuthenticated ? (
+              <>
+                <Upload className="w-5 h-5 mr-2" />
+                Sign In to Upload
+              </>
+            ) : isUploading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-zinc-900 mr-2"></div>
                 Uploading... {uploadProgress}%
