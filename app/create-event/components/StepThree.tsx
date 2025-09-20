@@ -167,6 +167,7 @@
 import React, { useState, useRef, DragEvent, ChangeEvent } from "react";
 import { validateFileSize } from "@/app/utils/s3";
 import { api } from "@/api/axios";
+import Image from "next/image";
 
 interface StepThreeProps {
   formData: {
@@ -209,14 +210,33 @@ const StepThree: React.FC<StepThreeProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string>("");
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Replace with your Cloudinary details
+
+  // Browser detection helper
+  const isMobileChrome = () => {
+    if (typeof window === "undefined") return false;
+    const userAgent = window.navigator.userAgent;
+    const isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        userAgent
+      );
+    const isChrome = /Chrome/i.test(userAgent);
+    return isMobile && isChrome;
+  };
 
   const uploadEventFlyerToS3 = async (file: File): Promise<string> => {
     try {
       // Step 1: Get presigned URL for event flyer upload using axios
       console.log("Getting presigned URL for event flyer upload");
+      console.log("Browser info:", {
+        userAgent:
+          typeof window !== "undefined" ? window.navigator.userAgent : "server",
+        isMobileChrome: isMobileChrome(),
+      });
+
       const presignedResponse = await api.post(
         `/media/event-flyer/s3-presigned-url`,
         {
@@ -244,15 +264,123 @@ const StepThree: React.FC<StepThreeProps> = ({
 
       console.log("Using upload URL for flyer:", uploadUrl);
 
-      // Step 2: Upload file directly to S3
-      const uploadResponse = await fetch(uploadUrl, {
-        method: "PUT",
-        body: file,
-        // Remove Content-Type header as it might conflict with presigned URL parameters
-      });
+      // Step 2: Upload file directly to S3 with mobile Chrome compatibility fixes
+      let uploadResponse;
+
+      if (isMobileChrome()) {
+        // Mobile Chrome specific upload with enhanced error handling
+        console.log("Using mobile Chrome optimized upload");
+
+        try {
+          // Create AbortController for better timeout handling on mobile
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => {
+            controller.abort();
+            console.log("Upload aborted due to timeout on mobile Chrome");
+          }, 30000); // 30 second timeout for mobile
+
+          // Use XMLHttpRequest as fallback for mobile Chrome
+          uploadResponse = await new Promise<Response>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            xhr.open("PUT", uploadUrl, true);
+
+            // Don't set Content-Type header - let browser handle it
+            // This is crucial for mobile Chrome compatibility
+
+            // Track upload progress for better UX on mobile
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const progress = Math.round((event.loaded / event.total) * 100);
+                setUploadProgress(progress);
+                console.log(`Mobile Chrome upload progress: ${progress}%`);
+              }
+            };
+
+            xhr.onload = () => {
+              clearTimeout(timeoutId);
+              setUploadProgress(100);
+              if (xhr.status >= 200 && xhr.status < 300) {
+                // Create a Response-like object for consistency
+                resolve({
+                  ok: true,
+                  status: xhr.status,
+                  statusText: xhr.statusText,
+                  text: () => Promise.resolve(""),
+                } as Response);
+              } else {
+                reject(
+                  new Error(
+                    `Upload failed with status: ${xhr.status} - ${xhr.statusText}`
+                  )
+                );
+              }
+            };
+
+            xhr.onerror = () => {
+              clearTimeout(timeoutId);
+              setUploadProgress(0);
+              reject(
+                new Error("Network error during upload - check your connection")
+              );
+            };
+
+            xhr.ontimeout = () => {
+              clearTimeout(timeoutId);
+              setUploadProgress(0);
+              reject(
+                new Error(
+                  "Upload timeout - file may be too large or connection too slow"
+                )
+              );
+            };
+
+            xhr.onabort = () => {
+              clearTimeout(timeoutId);
+              setUploadProgress(0);
+              reject(new Error("Upload aborted"));
+            };
+
+            // Reset progress and send the file
+            setUploadProgress(0);
+            xhr.send(file);
+          });
+        } catch (xhrError: any) {
+          console.error(
+            "XMLHttpRequest upload failed, trying fetch:",
+            xhrError
+          );
+
+          // Fallback to fetch with minimal headers
+          uploadResponse = await fetch(uploadUrl, {
+            method: "PUT",
+            body: file,
+            // Explicitly don't set any headers for mobile Chrome
+            headers: {},
+          });
+        }
+      } else {
+        // Standard upload for other browsers
+        console.log("Using standard upload for non-mobile Chrome");
+        uploadResponse = await fetch(uploadUrl, {
+          method: "PUT",
+          body: file,
+          // Remove Content-Type header as it might conflict with presigned URL parameters
+        });
+      }
 
       if (!uploadResponse.ok) {
-        throw new Error("Failed to upload event flyer to S3");
+        const errorText = await uploadResponse
+          .text?.()
+          .catch(() => "No error details");
+        console.error("S3 upload failed:", {
+          status: uploadResponse.status,
+          statusText: uploadResponse.statusText,
+          error: errorText,
+        });
+        throw new Error(
+          `Failed to upload event flyer to S3: ${uploadResponse.status} ${uploadResponse.statusText}`
+        );
       }
 
       // Return the S3 URL (without query parameters)
@@ -262,6 +390,14 @@ const StepThree: React.FC<StepThreeProps> = ({
       return s3Url;
     } catch (error: any) {
       console.error("Event flyer S3 upload error:", error);
+
+      // Enhanced error messages for mobile Chrome
+      if (isMobileChrome() && error.message.includes("Failed to fetch")) {
+        throw new Error(
+          "Upload failed on mobile Chrome. This could be due to network issues or browser restrictions. Please try again or use a different browser."
+        );
+      }
+
       if (error.response) {
         // Axios error with response
         console.error("API Error:", {
@@ -299,6 +435,7 @@ const StepThree: React.FC<StepThreeProps> = ({
 
     setIsUploading(true);
     setUploadError("");
+    setUploadProgress(0);
 
     try {
       // Create local preview immediately
@@ -323,10 +460,10 @@ const StepThree: React.FC<StepThreeProps> = ({
       } as React.ChangeEvent<HTMLInputElement>;
 
       handleChange(syntheticEvent);
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setUploadError("Failed to upload image. Please try again.");
       setPreviewUrl(""); // Clear preview on error
+      setUploadProgress(0); // Reset progress on error
     } finally {
       setIsUploading(false);
     }
@@ -372,6 +509,7 @@ const StepThree: React.FC<StepThreeProps> = ({
   const clearImage = () => {
     setPreviewUrl("");
     setUploadError("");
+    setUploadProgress(0);
     const syntheticEvent = {
       target: {
         name: "eventFlyer",
@@ -411,13 +549,12 @@ const StepThree: React.FC<StepThreeProps> = ({
       >
         {previewUrl ? (
           <>
-            <img
+            <Image
               src={previewUrl}
               alt="Event Flyer Preview"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = "none";
+              fill
+              className="object-cover"
+              onError={() => {
                 setUploadError("Failed to load image");
               }}
             />
@@ -467,6 +604,17 @@ const StepThree: React.FC<StepThreeProps> = ({
             <div className="text-center">
               <div className="animate-spin text-2xl mb-2">⟳</div>
               <div>Uploading...</div>
+              {isMobileChrome() && uploadProgress > 0 && (
+                <div className="mt-2">
+                  <div className="w-24 bg-gray-700 rounded-full h-2 mx-auto">
+                    <div
+                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-xs mt-1">{uploadProgress}%</div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -503,9 +651,20 @@ const StepThree: React.FC<StepThreeProps> = ({
         </div>
 
         {(uploadError || fieldError) && (
-          <p className="text-red-400 text-sm mb-4">
-            {uploadError || fieldError}
-          </p>
+          <div className="bg-red-900/20 border border-red-400 rounded-lg p-3 mb-4">
+            <p className="text-red-400 text-sm">{uploadError || fieldError}</p>
+            {isMobileChrome() && uploadError && (
+              <div className="mt-2 text-xs text-red-300">
+                <p>💡 Mobile Chrome Tips:</p>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>Try using a different browser (Safari, Firefox)</li>
+                  <li>Check your internet connection</li>
+                  <li>Clear browser cache and try again</li>
+                  <li>Ensure the image is under 10MB</li>
+                </ul>
+              </div>
+            )}
+          </div>
         )}
 
         <button

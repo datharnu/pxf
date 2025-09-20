@@ -48,3 +48,4 @@ export const isEventCreator = (
 ): boolean => {
   return !!currentUserId && eventCreatorId === currentUserId;
 };
+

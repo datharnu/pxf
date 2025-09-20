@@ -71,3 +71,4 @@ if (typeof window !== "undefined") {
     processingTracker.cleanup();
   }, 60000);
 }
+
