@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -8,7 +9,7 @@ interface UploadPreviewProps {
   uploadProgress: number;
   isComplete: boolean;
   thumbnail: string;
-  onRemove?: () => void; // eslint-disable-line @typescript-eslint/no-unused-vars
+  onRemove?: () => void;
 }
 
 export const UploadPreview: React.FC<UploadPreviewProps> = ({
@@ -16,7 +17,7 @@ export const UploadPreview: React.FC<UploadPreviewProps> = ({
   uploadProgress,
   isComplete,
   thumbnail,
-  onRemove,
+  onRemove: _onRemove,
 }) => {
   const [previewUrl, setPreviewUrl] = useState<string>("");
 
