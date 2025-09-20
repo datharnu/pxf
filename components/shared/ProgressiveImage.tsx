@@ -33,7 +33,7 @@ export const ProgressiveImage: React.FC<ProgressiveImageProps> = ({
   useEffect(() => {
     // If we have a thumbnail, start loading the full image in background
     if (thumbnailSrc && thumbnailSrc !== src) {
-      const img = new Image();
+      const img = new window.Image();
       img.onload = () => {
         setCurrentSrc(src);
         setIsLoaded(true);
