@@ -36,7 +36,7 @@ const createEventSchema = z
     description: z
       .string()
       .min(10, "Description must be at least 10 characters"),
-    eventFlyer: z.string().url("Event Flyer must be a valid URL"),
+    eventFlyer: z.string().url("Event Flyer is required "),
     guestLimit: z.union([
       z.enum(["10", "100", "250", "500", "800", "1000+"]),
       z.literal("CUSTOM"),
@@ -341,7 +341,7 @@ const MultiStepForm: React.FC = () => {
           setSubmitError("Description must be at least 10 characters");
           break;
         case 3:
-          setSubmitError("Event Flyer must be a valid URL");
+          setSubmitError("Event Flyer is required");
           break;
         case 4:
           setSubmitError(
