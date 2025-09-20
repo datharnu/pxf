@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // "use client";
 // import React, { useState } from "react";
 // import { StepProps } from "./types";
@@ -163,7 +165,8 @@
 
 "use client";
 import React, { useState, useRef, DragEvent, ChangeEvent } from "react";
-import { validateFileSize } from "@/app/utils/cloudinary";
+import { validateFileSize } from "@/app/utils/s3";
+import { api } from "@/api/axios";
 
 interface StepThreeProps {
   formData: {
@@ -209,35 +212,72 @@ const StepThree: React.FC<StepThreeProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Replace with your Cloudinary details
-  const CLOUDINARY_CLOUD_NAME =
-    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "your_cloud_name";
-  const CLOUDINARY_UPLOAD_PRESET =
-    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "your_upload_preset";
 
-  const uploadToCloudinary = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-    formData.append("folder", "event-flyers"); // Optional: organize uploads in folders
-
+  const uploadEventFlyerToS3 = async (file: File): Promise<string> => {
     try {
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+      // Step 1: Get presigned URL for event flyer upload using axios
+      console.log("Getting presigned URL for event flyer upload");
+      const presignedResponse = await api.post(
+        `/media/event-flyer/s3-presigned-url`,
         {
-          method: "POST",
-          body: formData,
+          fileName: file.name,
+          mimeType: file.type,
+          fileSize: file.size,
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Upload failed");
+      console.log("Event flyer presigned response:", presignedResponse.data);
+
+      // Validate response structure - assuming similar format to event uploads
+      if (!presignedResponse.data || !presignedResponse.data.data) {
+        throw new Error("Invalid response from backend - no data");
       }
 
-      const data = await response.json();
-      return data.secure_url;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      throw new Error("Failed to upload image to Cloudinary");
+      const { uploadUrl } = presignedResponse.data.data;
+
+      if (!uploadUrl) {
+        console.error("Missing uploadUrl in response:", presignedResponse.data);
+        throw new Error(
+          "Backend did not return a presigned URL for event flyer"
+        );
+      }
+
+      console.log("Using upload URL for flyer:", uploadUrl);
+
+      // Step 2: Upload file directly to S3
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        // Remove Content-Type header as it might conflict with presigned URL parameters
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload event flyer to S3");
+      }
+
+      // Return the S3 URL (without query parameters)
+      const s3Url = uploadUrl.split("?")[0]; // Remove query parameters to get clean URL
+
+      console.log("Final flyer S3 URL:", s3Url);
+      return s3Url;
+    } catch (error: any) {
+      console.error("Event flyer S3 upload error:", error);
+      if (error.response) {
+        // Axios error with response
+        console.error("API Error:", {
+          status: error.response.status,
+          data: error.response.data,
+          message: error.message,
+        });
+        throw new Error(
+          `Failed to upload event flyer: ${error.response.status} - ${
+            error.response.data?.message || error.message
+          }`
+        );
+      } else {
+        // Other error (network, etc.)
+        throw new Error(`Failed to upload event flyer: ${error.message}`);
+      }
     }
   };
 
@@ -265,20 +305,20 @@ const StepThree: React.FC<StepThreeProps> = ({
       const localPreview = URL.createObjectURL(file);
       setPreviewUrl(localPreview);
 
-      // Upload to Cloudinary
-      const cloudinaryUrl = await uploadToCloudinary(file);
+      // Upload to S3
+      const s3Url = await uploadEventFlyerToS3(file);
 
       // Clean up local preview
       URL.revokeObjectURL(localPreview);
 
-      // Update with Cloudinary URL
-      setPreviewUrl(cloudinaryUrl);
+      // Update with S3 URL
+      setPreviewUrl(s3Url);
 
       // Update form data
       const syntheticEvent = {
         target: {
           name: "eventFlyer",
-          value: cloudinaryUrl,
+          value: s3Url,
         },
       } as React.ChangeEvent<HTMLInputElement>;
 

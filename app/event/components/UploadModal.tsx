@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Upload, X, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { api } from "@/api/axios";
 import { useQuery } from "@tanstack/react-query";
-import { validateFileSize } from "@/app/utils/cloudinary";
+import { validateFileSize, uploadMultipleToS3 } from "@/app/utils/s3";
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -26,34 +26,7 @@ interface UploadModalProps {
   onUploadSuccess?: () => void; // Add this prop
 }
 
-interface CloudinarySignatureResponse {
-  success: boolean;
-  signature: string;
-  timestamp: number;
-  cloudName: string;
-  apiKey: string;
-  folder: string;
-  remainingUploads: number;
-  signedParams: {
-    folder: string;
-    timestamp: number;
-    quality: string;
-    fetch_format: string;
-  };
-}
-
-interface CloudinaryUploadResult {
-  public_id: string;
-  bytes: number;
-  format: string;
-  height: number;
-  width: number;
-  url: string;
-  secure_url: string;
-  original_filename: string;
-  resource_type: string;
-  created_at: string;
-}
+// S3 upload interfaces (handled by utility functions)
 
 interface MediaUrlData {
   url: string;
@@ -106,64 +79,7 @@ export function UploadModal({
 
   if (!isOpen) return null;
 
-  const getCloudinarySignature =
-    async (): Promise<CloudinarySignatureResponse> => {
-      try {
-        const response = await api.get(
-          `/media/event/${eventData.id}/cloudinary-signature`
-        );
-        return response.data;
-      } catch (error: any) {
-        console.error("Error getting Cloudinary signature:", error);
-        throw new Error(
-          error.response?.data?.message || "Failed to get Cloudinary signature"
-        );
-      }
-    };
-
-  const uploadToCloudinary = async (
-    file: File,
-    signatureData: CloudinarySignatureResponse
-  ): Promise<CloudinaryUploadResult> => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("api_key", signatureData.apiKey);
-    formData.append("timestamp", signatureData.timestamp.toString());
-    formData.append("signature", signatureData.signature);
-
-    // Add ALL parameters that were included in the signature
-    formData.append("folder", signatureData.folder);
-
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/auto/upload`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Cloudinary upload failed: ${error}`);
-    }
-
-    return response.json();
-  };
-
-  const submitMediaUrls = async (mediaUrls: MediaUrlData[]) => {
-    try {
-      const response = await api.post(
-        `/media/event/${eventData.id}/submit-media`,
-        { mediaUrls }
-      );
-      return response.data;
-    } catch (error: any) {
-      console.error("Error submitting media URLs:", error);
-      throw new Error(
-        error.response?.data?.message || "Failed to submit media URLs"
-      );
-    }
-  };
+  // S3 upload logic is now handled by utility functions
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -175,82 +91,75 @@ export function UploadModal({
     setErrorMessage("");
 
     try {
-      // Get Cloudinary signature first
-      const signatureResponse = await getCloudinarySignature();
+      // Check upload limits (this should now be handled by the backend)
+      // But we can still do basic client-side validation
 
-      if (!signatureResponse.success) {
-        throw new Error("Failed to get upload credentials");
-      }
+      // Optimistically show reduced remaining uploads while uploading
+      const currentRemaining =
+        uploadStats?.remainingUploads ?? eventData.photoCapLimit;
 
       // Check if user has remaining uploads
-      if (signatureResponse.remainingUploads <= 0) {
+      if (currentRemaining <= 0) {
         throw new Error(
           `You have reached your upload limit of ${eventData.photoCapLimit} files for this event`
         );
       }
 
       // Check if trying to upload more than remaining uploads
-      if (files.length > signatureResponse.remainingUploads) {
+      if (files.length > currentRemaining) {
         throw new Error(
-          `You can only upload ${signatureResponse.remainingUploads} more file${
-            signatureResponse.remainingUploads !== 1 ? "s" : ""
+          `You can only upload ${currentRemaining} more file${
+            currentRemaining !== 1 ? "s" : ""
           }`
         );
       }
 
-      // Optimistically show reduced remaining uploads while uploading
-      setOptimisticRemaining(
-        Math.max(0, signatureResponse.remainingUploads - files.length)
+      setOptimisticRemaining(Math.max(0, currentRemaining - files.length));
+
+      // Upload files to S3 with progress tracking
+      const s3Results = await uploadMultipleToS3(
+        Array.from(files),
+        eventData.id,
+        (progress) => {
+          setUploadProgress(progress);
+        }
       );
 
-      // Upload files to Cloudinary with progress tracking
-      const results: CloudinaryUploadResult[] = [];
-      let completed = 0;
-      const total = files.length;
-
-      for (const file of Array.from(files)) {
-        try {
-          // Validate file size before upload
-          validateFileSize(file);
-
-          const result = await uploadToCloudinary(file, signatureResponse);
-          results.push(result);
-          completed++;
-          setUploadProgress(Math.round((completed / total) * 100));
-        } catch (error) {
-          console.error("Failed to upload file:", file.name, error);
-          throw new Error(
-            `Failed to upload ${file.name}: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`
-          );
+      // Submit S3 media to backend
+      const submitResponse = await fetch(
+        `/api/v1/media/event/${eventData.id}/submit-s3-media`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            mediaUrls: s3Results.map((result) => ({
+              url: result.url,
+              fileName: result.fileName,
+              fileSize: result.fileSize,
+              mimeType: result.mimeType,
+              s3Key: result.key,
+            })),
+          }),
         }
+      );
+
+      if (!submitResponse.ok) {
+        throw new Error("Failed to submit media URLs to backend");
       }
 
-      // Prepare media data for backend submission
-      const mediaUrls: MediaUrlData[] = results.map((result) => ({
-        url: result.secure_url,
-        fileName: result.original_filename,
-        fileSize: result.bytes,
-        mimeType:
-          result.resource_type === "image"
-            ? `image/${result.format}`
-            : `video/${result.format}`,
-        publicId: result.public_id,
-      }));
+      const submitData = await submitResponse.json();
 
-      // Submit to backend
-      const submitResponse = await submitMediaUrls(mediaUrls);
-
-      if (submitResponse.success) {
+      if (submitData.success) {
         setUploadStatus("success");
 
         // Check if face processing is happening
-        if (submitResponse.faceProcessing) {
+        if (submitData.faceProcessing) {
           console.log(
-            `Face processing: ${submitResponse.faceProcessing.imagesProcessed} images processed`
+            `Face processing: ${submitData.faceProcessing.imagesProcessed} images processed`
           );
-          console.log(`Status: ${submitResponse.faceProcessing.status}`);
+          console.log(`Status: ${submitData.faceProcessing.status}`);
         }
 
         // Refresh the stats

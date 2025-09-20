@@ -1,17 +1,16 @@
-// Cloudinary configuration and upload utilities
+// S3 and file upload utilities
 
-export const CLOUDINARY_CONFIG = {
-  cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "your-cloud-name",
-  uploadPreset:
-    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "pov_events",
-  apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+export const S3_CONFIG = {
+  // S3 configuration will be handled by backend presigned URLs
+  region: process.env.NEXT_PUBLIC_AWS_REGION || "eu-north-1",
+  bucketName: process.env.AWS_S3_BUCKET_NAME || "picha-media",
 };
 
-// File size limits (in bytes)
+// File size limits (in bytes) - Now using S3 with much higher limits
 export const FILE_SIZE_LIMITS = {
-  image: 10 * 1024 * 1024, // 10MB for images (Cloudinary account limit)
-  video: 10 * 1024 * 1024, // 10MB for videos (Cloudinary account limit)
-  total: 1024 * 1024 * 1024, // 1GB total per upload session
+  image: 100 * 1024 * 1024, // 100MB for images (S3 allows up to 5TB!)
+  video: 500 * 1024 * 1024, // 500MB for videos
+  total: 2 * 1024 * 1024 * 1024, // 2GB total per upload session
 };
 
 // Upload performance settings
@@ -48,63 +47,84 @@ export const formatFileSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 
-export const uploadToCloudinary = async (
+// S3 Upload Functions
+export const uploadToS3 = async (
   file: File,
+  eventId: string,
   onProgress?: (progress: number) => void
-): Promise<string> => {
+): Promise<{ url: string; key: string }> => {
   // Validate file size before upload
   validateFileSize(file);
 
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
-
-  // Add folder for organization
-  formData.append("folder", "pov-events");
-
-  // Add tags for better organization
-  formData.append("tags", "pov-events");
-
-  // Add quality settings for better compression
-  if (file.type.startsWith("image/")) {
-    formData.append("quality", "auto"); // Auto quality optimization
-  }
-
   try {
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/auto/upload`,
+    // Step 1: Get presigned URL from backend
+    const presignedResponse = await fetch(
+      `/api/v1/media/event/${eventId}/s3-presigned-url`,
       {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+        }),
       }
     );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.error?.message ||
-          `Cloudinary upload failed: ${response.statusText}`
-      );
+    if (!presignedResponse.ok) {
+      throw new Error("Failed to get presigned URL");
     }
 
-    const data = await response.json();
+    const { presignedUrl, key } = await presignedResponse.json();
+
+    // Step 2: Upload file directly to S3
+    const uploadResponse = await fetch(presignedUrl, {
+      method: "PUT",
+      body: file,
+      headers: {
+        "Content-Type": file.type,
+      },
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error("Failed to upload to S3");
+    }
 
     if (onProgress) {
       onProgress(100);
     }
 
-    return data.secure_url;
+    // Return the S3 URL and key
+    const s3Url = presignedUrl.split("?")[0]; // Remove query parameters to get clean URL
+    return { url: s3Url, key };
   } catch (error) {
-    console.error("Cloudinary upload error:", error);
-    throw new Error("Failed to upload to Cloudinary");
+    console.error("S3 upload error:", error);
+    throw new Error("Failed to upload to S3");
   }
 };
 
-export const uploadMultipleToCloudinary = async (
+export const uploadMultipleToS3 = async (
   files: File[],
+  eventId: string,
   onProgress?: (progress: number) => void
-): Promise<string[]> => {
-  const urls: string[] = [];
+): Promise<
+  {
+    url: string;
+    key: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+  }[]
+> => {
+  const results: {
+    url: string;
+    key: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+  }[] = [];
   const { maxConcurrentUploads } = UPLOAD_SETTINGS;
 
   // Process files in batches for better performance
@@ -114,19 +134,27 @@ export const uploadMultipleToCloudinary = async (
     // Upload batch concurrently
     const batchPromises = batch.map(async (file, batchIndex) => {
       const fileIndex = i + batchIndex;
-      return uploadToCloudinary(file, (fileProgress) => {
+      const result = await uploadToS3(file, eventId, (fileProgress) => {
         if (onProgress) {
           const overallProgress =
             ((fileIndex + fileProgress / 100) / files.length) * 100;
           onProgress(Math.round(overallProgress));
         }
       });
+
+      return {
+        url: result.url,
+        key: result.key,
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type,
+      };
     });
 
     // Wait for current batch to complete
-    const batchUrls = await Promise.all(batchPromises);
-    urls.push(...batchUrls);
+    const batchResults = await Promise.all(batchPromises);
+    results.push(...batchResults);
   }
 
-  return urls;
+  return results;
 };

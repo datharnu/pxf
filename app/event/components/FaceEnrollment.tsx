@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { validateFileSize } from "@/app/utils/cloudinary";
+import { validateFileSize } from "@/app/utils/s3";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
