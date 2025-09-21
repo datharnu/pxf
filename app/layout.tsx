@@ -49,7 +49,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import QueryAppProvider from "./provider/queryprovider";
-import ShuffledAds from "@/components/shared/ShuffledAds";
+// import ShuffledAds from "@/components/shared/ShuffledAds";
 
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -265,7 +265,7 @@ export default function RootLayout({
           <QueryAppProvider>
             <Toaster />
             {children}
-            <ShuffledAds adUrl="https://www.rentville.ng" />
+            {/* <ShuffledAds adUrl="https://www.rentville.ng" /> */}
           </QueryAppProvider>
         </body>
       </html>
