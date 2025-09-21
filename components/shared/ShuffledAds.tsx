@@ -17,18 +17,21 @@ const ShuffledAds = ({
     "popup"
   );
   const [isVisible, setIsVisible] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
     // First ad (popup) shows after 2 minutes
     const initialTimeout = setTimeout(() => {
       setCurrentAdType("popup");
       setIsVisible(true);
+      setIsDismissed(false);
     }, 2 * 60 * 1000); // 2 minutes
 
     // Set up interval to switch between ad types every 4 minutes after the first ad
     const interval = setInterval(() => {
       setCurrentAdType((prev) => (prev === "banner" ? "popup" : "banner"));
       setIsVisible(true);
+      setIsDismissed(false);
     }, showInterval);
 
     return () => {
@@ -36,6 +39,12 @@ const ShuffledAds = ({
       clearInterval(interval);
     };
   }, [showInterval]);
+
+  // Handle ad dismissal
+  const handleAdDismissed = () => {
+    setIsVisible(false);
+    setIsDismissed(true);
+  };
 
   // Banner ad configuration
   const bannerConfig = {
@@ -45,7 +54,8 @@ const ShuffledAds = ({
       "List empty apartments or moving-out spaces on Rentville and start cashing out today.",
     adImageUrl: "/rentville2.png",
     showInterval: showInterval,
-    isVisible: isVisible && currentAdType === "banner",
+    isVisible: isVisible && currentAdType === "banner" && !isDismissed,
+    onDismiss: handleAdDismissed,
   };
 
   // Popup ad configuration
@@ -56,7 +66,8 @@ const ShuffledAds = ({
       "Whether it's a vacant flat nearby or your own place, Rentville helps you connect directly with renters and make quick money.",
     adImageUrl: "/rentville.png",
     showInterval: showInterval,
-    isVisible: isVisible && currentAdType === "popup",
+    isVisible: isVisible && currentAdType === "popup" && !isDismissed,
+    onDismiss: handleAdDismissed,
   };
 
   if (!isVisible) {

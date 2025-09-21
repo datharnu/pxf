@@ -11,6 +11,7 @@ interface PopupAdsProps {
   adImageUrl?: string;
   showInterval?: number; // in milliseconds, default 2 minutes
   isVisible?: boolean; // controlled by parent component
+  onDismiss?: () => void; // callback when ad is dismissed
 }
 
 const PopupAds = ({
@@ -20,6 +21,7 @@ const PopupAds = ({
   adImageUrl = "/rentville.png",
   showInterval = 2 * 60 * 1000, // 2 minutes in milliseconds
   isVisible: externalIsVisible = false,
+  onDismiss,
 }: PopupAdsProps) => {
   const [internalIsVisible, setInternalIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
@@ -36,17 +38,21 @@ const PopupAds = ({
   const handleDismiss = () => {
     setInternalIsVisible(false);
     setIsDismissed(true);
-    // Reset dismissed state after a short delay to allow popup to show again in next cycle
-    setTimeout(() => setIsDismissed(false), 1000);
+    // Notify parent component that ad was dismissed
+    onDismiss?.();
   };
 
   const handleVisitAd = () => {
     window.open(adUrl, "_blank", "noopener,noreferrer");
     setInternalIsVisible(false);
+    // Notify parent component that ad was dismissed
+    onDismiss?.();
   };
 
   const handleOverlayClick = () => {
     setInternalIsVisible(false);
+    // Notify parent component that ad was dismissed
+    onDismiss?.();
   };
 
   if (!internalIsVisible) {
