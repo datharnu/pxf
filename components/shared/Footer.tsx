@@ -14,6 +14,7 @@ import {
   Star,
   Users,
 } from "lucide-react";
+import Image from "next/image";
 
 export default function ModernFooter() {
   const currentYear = new Date().getFullYear();
@@ -26,12 +27,16 @@ export default function ModernFooter() {
           {/* Brand Section */}
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-400 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-r to-[#FF851C]  from-[#270D01] rounded-lg flex items-center justify-center">
                 <Camera className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
-                Picha Events
-              </span>
+              <Image
+                src={"/picha-logo.png"}
+                alt="logo"
+                width={100}
+                height={100}
+                className="w-20 "
+              />
             </div>
             <p className="text-gray-300 text-sm mb-6">
               Create unforgettable memories with seamless photo and video
@@ -105,7 +110,7 @@ export default function ModernFooter() {
                   href="tel:+2348123456789"
                   className="text-gray-300 hover:text-white transition-colors text-sm"
                 >
-                  +234 812 345 6789
+                  +234 906 543 4849
                 </a>
               </div>
               <div className="flex items-center space-x-2">
@@ -122,7 +127,7 @@ export default function ModernFooter() {
                   placeholder="Your email"
                   className="flex-1 px-3 py-2 text-sm bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
                 />
-                <button className="px-4 py-2 bg-gradient-to-r from-amber-400 to-orange-400 text-black rounded-lg font-medium hover:from-amber-500 hover:to-orange-500 transition-all duration-200 text-sm">
+                <button className="px-4 py-2 bg-gradient-to-r to-[#FF851C]  from-[#270D01]  rounded-lg font-medium hover:from-amber-500 hover:to-orange-500 transition-all duration-200 text-sm">
                   Subscribe
                 </button>
               </div>
