@@ -174,10 +174,11 @@ export default function Navbar({
                 className="text-white font-bold text-xl tracking-wider"
               >
                 <Image
-                  src={"/pica-logo.png"}
+                  src={"/picha-logo.png"}
                   alt="logo"
                   width={100}
                   height={100}
+                  className="w-14"
                 />
               </Link>
               <button
