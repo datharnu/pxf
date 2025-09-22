@@ -371,7 +371,7 @@ export function UploadModal({
                   <span className="text-xs text-white">!</span>
                 </div>
                 <p className="text-xs text-green-400">
-                  Face enrollment doesn't count against this limit
+                  Face enrollment doesn&apos;t count against this limit
                 </p>
               </div>
             </div>
