@@ -269,7 +269,7 @@ export default function Features() {
             {/* Animated Main Feature */}
             <motion.div
               ref={mainFeatureRef}
-              initial={{ opacity: 0, x: 50 }}
+              initial={{ opacity: 0, x: 10 }}
               animate={isMainInView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.2 }}
               className="col-span-1 md:col-span-1 lg:col-start-3 lg:col-span-3 lg:row-span-3 relative 

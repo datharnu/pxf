@@ -51,7 +51,11 @@ export const enrollUserFace = async (
     // Provide more specific error messages based on the backend response
     let errorMessage = "Failed to enroll face";
 
-    if (error.response?.data?.message) {
+    if (error.response?.data?.error?.message) {
+      // Handle nested error structure: { error: { message: "..." } }
+      errorMessage = error.response.data.error.message;
+    } else if (error.response?.data?.message) {
+      // Handle direct message structure: { message: "..." }
       errorMessage = error.response.data.message;
     } else if (error.response?.status === 500) {
       errorMessage = "Server error during face enrollment. Please try again.";
@@ -63,7 +67,12 @@ export const enrollUserFace = async (
         "Google Vision API access denied. Please check your API credentials.";
     }
 
-    throw new Error(errorMessage);
+    // Create error object that preserves the original error structure
+    const enrollmentError = new Error(errorMessage);
+    (enrollmentError as any).originalError = error;
+    (enrollmentError as any).response = error.response;
+
+    throw enrollmentError;
   }
 };
 

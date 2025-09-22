@@ -33,6 +33,7 @@ import {
   Video,
   ChevronLeft,
   ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -49,6 +50,7 @@ import PhotobookComingSoon from "../components/PhotobookModal";
 import { isAuthenticated } from "@/app/utils/auth";
 import { MyFacesView } from "../components/MyFacesView";
 import { FaceStatus } from "../components/FaceStatus";
+import { processingTracker } from "@/app/utils/processingTracker";
 
 // Add this interface for the my-uploads response
 interface MyUploadsResponse {
@@ -485,6 +487,10 @@ export default function EventSlugPage() {
   const [previewMedia, setPreviewMedia] = useState<MediaItem | null>(null);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [hasFaceProfile, setHasFaceProfile] = useState<boolean | null>(null);
+  const [isProcessingUploads, setIsProcessingUploads] = useState(false);
+  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(
+    null
+  );
 
   // Local storage helpers for remembering event password per slug
   const getStoredEventPassword = (eventSlug: string | null | undefined) => {
@@ -894,6 +900,95 @@ export default function EventSlugPage() {
       } else {
         fetchMyUploads(eventData.id);
       }
+
+      // Check for processing items and start monitoring if needed
+      setTimeout(() => {
+        const hasProcessing = checkProcessingStatus();
+        if (hasProcessing) {
+          startPeriodicRefresh();
+        }
+      }, 1000); // Small delay to allow processing tracker to be updated
+    }
+  };
+
+  // Check if uploads are still processing
+  const checkProcessingStatus = () => {
+    const processingItems = processingTracker.getProcessingItems();
+    const hasProcessingItems = processingItems.length > 0;
+    const wasProcessing = isProcessingUploads;
+
+    setIsProcessingUploads(hasProcessingItems);
+
+    if (hasProcessingItems && !wasProcessing) {
+      // Just started processing
+      console.log(
+        `🔄 ${processingItems.length} uploads still processing:`,
+        processingItems
+      );
+      toast.info("Uploads are processing in the background", {
+        description: "Your photos will appear once processing is complete",
+        duration: 4000,
+      });
+    } else if (!hasProcessingItems && wasProcessing) {
+      // Just finished processing
+      console.log("✅ All uploads processing complete");
+      toast.success("All uploads processed successfully!", {
+        duration: 3000,
+      });
+    } else if (hasProcessingItems) {
+      console.log(
+        `🔄 ${processingItems.length} uploads still processing:`,
+        processingItems
+      );
+    }
+
+    return hasProcessingItems;
+  };
+
+  // Manual refresh function
+  const handleRefresh = () => {
+    if (eventData) {
+      console.log("🔄 Manual refresh triggered");
+      if (activeFilter === "all") {
+        fetchEventMedia(eventData.id);
+      } else if (activeFilter === "my") {
+        fetchMyUploads(eventData.id);
+      } else if (activeFilter.startsWith("user:")) {
+        const userId = activeFilter.split(":")[1];
+        if (userId) {
+          fetchUserUploads(eventData.id, userId, 1);
+        }
+      }
+    }
+  };
+
+  // Start periodic refresh when uploads are processing
+  const startPeriodicRefresh = () => {
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+    }
+
+    const interval = setInterval(() => {
+      const stillProcessing = checkProcessingStatus();
+      if (!stillProcessing) {
+        // Stop periodic refresh when processing is complete
+        clearInterval(interval);
+        setRefreshInterval(null);
+        console.log("🔄 Stopping periodic refresh - all uploads complete");
+      } else {
+        // Refresh media data while processing
+        handleRefresh();
+      }
+    }, 3000); // Check every 3 seconds
+
+    setRefreshInterval(interval);
+  };
+
+  // Stop periodic refresh
+  const stopPeriodicRefresh = () => {
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+      setRefreshInterval(null);
     }
   };
 
@@ -925,6 +1020,29 @@ export default function EventSlugPage() {
       }
     }
   }, [eventData, needsPassword, activeFilter]);
+
+  // Check processing status on mount and when component becomes visible
+  useEffect(() => {
+    const hasProcessing = checkProcessingStatus();
+    if (hasProcessing) {
+      startPeriodicRefresh();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      stopPeriodicRefresh();
+    };
+  }, []);
+
+  // Monitor processing status changes
+  useEffect(() => {
+    const hasProcessing = checkProcessingStatus();
+    if (hasProcessing && !refreshInterval) {
+      startPeriodicRefresh();
+    } else if (!hasProcessing && refreshInterval) {
+      stopPeriodicRefresh();
+    }
+  }, [mediaData, myUploadsData, userUploadsData]);
 
   const checkEventAccess = async () => {
     try {
@@ -1520,10 +1638,21 @@ export default function EventSlugPage() {
                 {/* Gallery Header */}
                 <div className="flex justify-between items-center mb-6">
                   <div>
-                    <h2 className="text-xl font-bold text-zinc-50">
-                      Event Gallery{" "}
-                      {activeFilter === "my" ? "(My Uploads)" : ""}
-                    </h2>
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-xl font-bold text-zinc-50">
+                        Event Gallery{" "}
+                        {activeFilter === "my" ? "(My Uploads)" : ""}
+                      </h2>
+                      {/* Processing indicator */}
+                      {isProcessingUploads && (
+                        <div className="flex items-center gap-2 px-3 py-1 bg-blue-500/20 border border-blue-500/30 rounded-full">
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                          <span className="text-blue-300 text-xs font-medium">
+                            Processing
+                          </span>
+                        </div>
+                      )}
+                    </div>
                     <p className="text-zinc-400 text-sm">
                       {mediaLoading
                         ? "Loading..."
@@ -1531,28 +1660,53 @@ export default function EventSlugPage() {
                     </p>
                   </div>
 
-                  {/* View Toggle */}
-                  <div className="flex items-center gap-2 bg-zinc-800/50 rounded-lg p-1">
+                  {/* Controls */}
+                  <div className="flex items-center gap-2">
+                    {/* Refresh Button */}
                     <button
-                      onClick={() => setViewMode("grid")}
-                      className={`p-2 rounded-md transition-all duration-200 ${
-                        viewMode === "grid"
-                          ? "bg-amber-500 text-zinc-900"
-                          : "text-zinc-400 hover:text-zinc-200"
-                      }`}
+                      onClick={handleRefresh}
+                      disabled={mediaLoading}
+                      className={`p-2 rounded-lg transition-all duration-200 ${
+                        isProcessingUploads
+                          ? "bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:bg-amber-500/30"
+                          : "bg-zinc-800/50 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50"
+                      } ${mediaLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                      title={
+                        isProcessingUploads
+                          ? "Uploads are processing - auto-refreshing"
+                          : "Refresh gallery"
+                      }
                     >
-                      <Grid3X3 className="w-4 h-4" />
+                      <RefreshCw
+                        className={`w-4 h-4 ${
+                          isProcessingUploads ? "animate-spin" : ""
+                        }`}
+                      />
                     </button>
-                    <button
-                      onClick={() => setViewMode("list")}
-                      className={`p-2 rounded-md transition-all duration-200 ${
-                        viewMode === "list"
-                          ? "bg-amber-500 text-zinc-900"
-                          : "text-zinc-400 hover:text-zinc-200"
-                      }`}
-                    >
-                      <List className="w-4 h-4" />
-                    </button>
+
+                    {/* View Toggle */}
+                    <div className="flex items-center gap-2 bg-zinc-800/50 rounded-lg p-1">
+                      <button
+                        onClick={() => setViewMode("grid")}
+                        className={`p-2 rounded-md transition-all duration-200 ${
+                          viewMode === "grid"
+                            ? "bg-amber-500 text-zinc-900"
+                            : "text-zinc-400 hover:text-zinc-200"
+                        }`}
+                      >
+                        <Grid3X3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setViewMode("list")}
+                        className={`p-2 rounded-md transition-all duration-200 ${
+                          viewMode === "list"
+                            ? "bg-amber-500 text-zinc-900"
+                            : "text-zinc-400 hover:text-zinc-200"
+                        }`}
+                      >
+                        <List className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -1568,24 +1722,34 @@ export default function EventSlugPage() {
                 {!mediaLoading && displayMedia.length === 0 && (
                   <div className="text-center py-16">
                     <div className="w-20 h-20 mx-auto mb-6 bg-zinc-800/50 rounded-2xl flex items-center justify-center">
-                      <Camera className="w-10 h-10 text-zinc-600" />
+                      {isProcessingUploads ? (
+                        <RefreshCw className="w-10 h-10 text-blue-400 animate-spin" />
+                      ) : (
+                        <Camera className="w-10 h-10 text-zinc-600" />
+                      )}
                     </div>
                     <h3 className="text-xl font-semibold text-zinc-300 mb-2">
-                      {activeFilter === "my"
+                      {isProcessingUploads
+                        ? "Processing your uploads..."
+                        : activeFilter === "my"
                         ? "No uploads yet"
                         : "No media yet"}
                     </h3>
                     <p className="text-zinc-500 mb-6 max-w-md mx-auto">
-                      {activeFilter === "my"
+                      {isProcessingUploads
+                        ? "Your photos and videos are being processed. They'll appear here once ready!"
+                        : activeFilter === "my"
                         ? "You haven't uploaded any media to this event yet. Upload your photos and videos to get started!"
                         : "Be the first to share memories from this event. Upload your photos and videos to get started!"}
                     </p>
-                    <button
-                      onClick={handleUploadClick}
-                      className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 px-6 py-3 rounded-xl text-zinc-900 font-semibold transition-all duration-200 transform hover:scale-105"
-                    >
-                      Upload Media
-                    </button>
+                    {!isProcessingUploads && (
+                      <button
+                        onClick={handleUploadClick}
+                        className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 px-6 py-3 rounded-xl text-zinc-900 font-semibold transition-all duration-200 transform hover:scale-105"
+                      >
+                        Upload Media
+                      </button>
+                    )}
                   </div>
                 )}
 

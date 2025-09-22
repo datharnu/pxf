@@ -362,13 +362,33 @@ export function UploadModal({
               </div>
             </div>
           ) : hasUploadsRemaining ? (
-            <p className="text-sm text-zinc-400 text-center">
-              Select your best {displayRemaining} photo(s) or video(s)!
-            </p>
+            <div className="text-center space-y-2">
+              <p className="text-sm text-zinc-400">
+                Select your best {displayRemaining} photo(s) or video(s)!
+              </p>
+              <div className="flex items-center gap-2 justify-center">
+                <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                  <span className="text-xs text-white">!</span>
+                </div>
+                <p className="text-xs text-green-400">
+                  Face enrollment doesn't count against this limit
+                </p>
+              </div>
+            </div>
           ) : (
-            <p className="text-sm text-zinc-400 text-center">
-              You&apos;ve reached your upload limit for this event.
-            </p>
+            <div className="text-center space-y-2">
+              <p className="text-sm text-zinc-400">
+                You&apos;ve reached your upload limit for this event.
+              </p>
+              <div className="flex items-center gap-2 justify-center">
+                <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                  <span className="text-xs text-white">!</span>
+                </div>
+                <p className="text-xs text-green-400">
+                  Face enrollment is still available
+                </p>
+              </div>
+            </div>
           )}
 
           {/* Upload Status */}

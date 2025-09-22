@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, ChangeEvent, FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { useInView } from "react-intersection-observer";
 import { z } from "zod";
 import Navbar from "@/components/shared/Navbar";
@@ -80,6 +81,7 @@ const createEventSchema = z
 type FormFieldNames = keyof CreateEventFormData;
 
 const MultiStepForm: React.FC = () => {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<number>(1);
   const totalSteps: number = 5;
   const formContainerRef = useRef<HTMLDivElement>(null);
@@ -133,6 +135,13 @@ const MultiStepForm: React.FC = () => {
   const [stepThreeRef, stepThreeInView] = useInView({ threshold: 0.6 });
   const [stepFourRef, stepFourInView] = useInView({ threshold: 0.6 });
   const [stepFiveRef, stepFiveInView] = useInView({ threshold: 0.6 });
+
+  // Check authentication on component mount
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push("/sign-in");
+    }
+  }, [router]);
 
   // Track current step in view
   useEffect(() => {
@@ -379,7 +388,7 @@ const MultiStepForm: React.FC = () => {
     e.preventDefault();
 
     if (!isAuthenticated()) {
-      setSubmitError("Please sign in to create an event");
+      router.push("/sign-in");
       return;
     }
 

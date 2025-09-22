@@ -69,7 +69,7 @@ export default function Navbar({
         }}
         className="shadow-sm overflow-hidden"
       >
-        <div className="bg-white rounded-xl py-3 lg:py-0 px-6 flex items-center justify-between">
+        <div className="bg-white rounded-xl py-3 lg:py-2 px-6 flex items-center justify-between">
           <div className="flex items-center gap-20">
             <div className="flex items-center">
               <Link href={"/"} className="text-xl font-bold">
