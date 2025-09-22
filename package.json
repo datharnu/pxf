@@ -1,6 +1,7 @@
 {
-  "name": "my-app",
-  "version": "0.1.0",
+  "name": "picha-event-platform",
+  "version": "1.0.0",
+  "description": "Picha - Cloud Event Photo & Video Sharing Platform with QR Code Technology",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
