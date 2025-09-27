@@ -96,8 +96,18 @@ api.interceptors.response.use(
         });
 
         // Update tokens in cookies
-        setCookie("token", response.data.accessToken);
-        setCookie("refresh_token", response.data.refreshToken);
+        // Access token expires in 1 hour (3600 seconds)
+        setCookie("token", response.data.accessToken, {
+          maxAge: 3600, // 1 hour
+          secure: true,
+          sameSite: "lax",
+        });
+        // Refresh token expires in 7 days (604800 seconds)
+        setCookie("refresh_token", response.data.refreshToken, {
+          maxAge: 604800, // 7 days
+          secure: true,
+          sameSite: "lax",
+        });
 
         // Update the Authorization header and retry the original request
         api.defaults.headers.common[

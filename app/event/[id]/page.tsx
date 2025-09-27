@@ -469,6 +469,7 @@ export default function EventSlugPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [mediaLoading, setMediaLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [needsPassword, setNeedsPassword] = useState(false);
   const [error, setError] = useState("");
@@ -627,7 +628,10 @@ export default function EventSlugPage() {
     append: boolean = false
   ) => {
     try {
-      setMediaLoading(true);
+      // Only show main loading state if not appending (loading more)
+      if (!append) {
+        setMediaLoading(true);
+      }
       console.log(`Fetching media for event: ${eventId}, page: ${page}`);
 
       const response = await api.get(
@@ -638,10 +642,10 @@ export default function EventSlugPage() {
       if (response.data.success) {
         if (append && mediaData) {
           // Append new media to existing media
-          setMediaData({
+          setMediaData((prevData) => ({
             ...response.data,
-            media: [...mediaData.media, ...response.data.media],
-          });
+            media: [...(prevData?.media || []), ...response.data.media],
+          }));
         } else {
           // Replace media with new data
           setMediaData(response.data);
@@ -658,7 +662,9 @@ export default function EventSlugPage() {
     } catch (error: any) {
       console.error("Error fetching media:", error);
     } finally {
-      setMediaLoading(false);
+      if (!append) {
+        setMediaLoading(false);
+      }
     }
   };
 
@@ -708,8 +714,14 @@ export default function EventSlugPage() {
   };
 
   const loadMoreMedia = async () => {
-    if (eventData && hasMorePages) {
-      await fetchEventMedia(eventData.id, currentPage + 1, true);
+    if (eventData && hasMorePages && !loadingMore) {
+      const nextPage = currentPage + 1;
+      console.log(
+        `Loading more media - current page: ${currentPage}, next page: ${nextPage}`
+      );
+      setLoadingMore(true);
+      await fetchEventMedia(eventData.id, nextPage, true);
+      setLoadingMore(false);
     }
   };
 
@@ -896,7 +908,9 @@ export default function EventSlugPage() {
     if (eventData) {
       // Refresh the appropriate data based on current filter
       if (activeFilter === "all") {
-        fetchEventMedia(eventData.id);
+        // Reset to page 1 on upload to show latest media
+        setCurrentPage(1);
+        fetchEventMedia(eventData.id, 1, false);
       } else {
         fetchMyUploads(eventData.id);
       }
@@ -950,7 +964,9 @@ export default function EventSlugPage() {
     if (eventData) {
       console.log("🔄 Manual refresh triggered");
       if (activeFilter === "all") {
-        fetchEventMedia(eventData.id);
+        // Reset to page 1 on manual refresh to avoid pagination issues
+        setCurrentPage(1);
+        fetchEventMedia(eventData.id, 1, false);
       } else if (activeFilter === "my") {
         fetchMyUploads(eventData.id);
       } else if (activeFilter.startsWith("user:")) {
@@ -1008,6 +1024,7 @@ export default function EventSlugPage() {
     if (eventData && !needsPassword) {
       if (activeFilter === "all") {
         // Reset to page 1 when switching to "All" tab
+        setCurrentPage(1);
         fetchEventMedia(eventData.id, 1, false);
       } else if (activeFilter === "my") {
         // My uploads doesn't seem to have pagination based on the API response
@@ -1966,24 +1983,30 @@ export default function EventSlugPage() {
                   <div className="text-center mt-8">
                     <button
                       onClick={loadMoreMedia}
-                      disabled={mediaLoading}
+                      disabled={loadingMore || mediaLoading}
                       className="bg-zinc-800/50 hover:bg-zinc-700/50 backdrop-blur-sm px-6 py-3 rounded-xl text-zinc-200 font-medium border border-zinc-700/50 transition-all duration-200 hover:border-zinc-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {mediaLoading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
-                          Loading...
-                        </>
-                      ) : (
-                        <>
-                          Load More Media
-                          <span className="ml-2 text-zinc-400">
-                            ({currentPage} of{" "}
-                            {mediaData?.pagination?.totalPages || 1})
-                          </span>
-                        </>
-                      )}
+                      <span className="flex items-center">
+                        {loadingMore && (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        )}
+                        Load More Media
+                        <span className="ml-2 text-zinc-400">
+                          ({currentPage} of{" "}
+                          {mediaData?.pagination?.totalPages || 1})
+                        </span>
+                      </span>
                     </button>
+                  </div>
+                )}
+
+                {/* Subtle loading indicator when loading more */}
+                {loadingMore && (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="flex items-center gap-2 text-zinc-400">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">Loading more media...</span>
+                    </div>
                   </div>
                 )}
               </>
@@ -2035,7 +2058,9 @@ export default function EventSlugPage() {
             onUploadSuccess={() => {
               // Refresh the media data based on the current filter
               if (activeFilter === "all") {
-                fetchEventMedia(eventData.id);
+                // Reset to page 1 on upload to show latest media
+                setCurrentPage(1);
+                fetchEventMedia(eventData.id, 1, false);
               } else {
                 fetchMyUploads(eventData.id);
               }
@@ -2049,7 +2074,9 @@ export default function EventSlugPage() {
               setActiveFilter(tab);
               if (!eventData) return;
               if (tab === "all") {
-                fetchEventMedia(eventData.id);
+                // Reset to page 1 when switching to "All" tab
+                setCurrentPage(1);
+                fetchEventMedia(eventData.id, 1, false);
               } else if (tab === "my") {
                 fetchMyUploads(eventData.id);
               } else if (tab.startsWith("user:")) {

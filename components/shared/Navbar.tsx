@@ -5,7 +5,15 @@ import Link from "next/link";
 import { navLinks } from "@/app/utils/Navlinks";
 import { Button } from "../ui/button";
 import { Menu, X, ChevronRight, ScanLine } from "lucide-react";
-import { useIsUserLoggedInStore } from "@/store/userStore";
+import {
+  useIsUserLoggedInStore,
+  useUserIdStore,
+  useAccessTokenStore,
+  useFullnameStore,
+  useEmailStore,
+  usePortraitImageStore,
+} from "@/store/userStore";
+import { deleteCookie } from "cookies-next";
 import ProfileAvatar from "./AvatarImage";
 import Image from "next/image";
 
@@ -33,17 +41,23 @@ export default function Navbar({
   };
 
   const handleSignOut = () => {
-    // Clear the authentication cookie
-    clearCookie("token");
-    clearCookie("refresh_token");
+    // Clear the authentication cookies
+    deleteCookie("token");
+    deleteCookie("refresh_token");
+
     // Clear all items in localStorage
     localStorage.clear();
-    // Redirect to the sign-in page or home page
-    window.location.href = "/sign-in";
-  };
 
-  const clearCookie = (name: string) => {
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    // Clear all Zustand stores
+    useIsUserLoggedInStore.getState().setIsUserLoggedIn(false);
+    useUserIdStore.getState().clearUserId();
+    useAccessTokenStore.getState().clearAccessToken();
+    useFullnameStore.getState().setFullname("");
+    useEmailStore.getState().setEmail("");
+    usePortraitImageStore.getState().setPortraitImage("");
+
+    // Redirect to the sign-in page
+    window.location.href = "/sign-in";
   };
 
   const handleJoinClick = () => {

@@ -50,8 +50,18 @@ export default function GoogleLoginButton() {
       // Store tokens
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
-      setCookie("token", accessToken);
-      setCookie("refresh_token", refreshToken);
+      // Access token expires in 1 hour (3600 seconds)
+      setCookie("token", accessToken, {
+        maxAge: 3600, // 1 hour
+        secure: true,
+        sameSite: "lax",
+      });
+      // Refresh token expires in 7 days (604800 seconds)
+      setCookie("refresh_token", refreshToken, {
+        maxAge: 604800, // 7 days
+        secure: true,
+        sameSite: "lax",
+      });
 
       // Update Zustand state
       useIsUserLoggedInStore.getState().setIsUserLoggedIn(true);
